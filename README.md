@@ -4,66 +4,44 @@ Portfolio project: **RAG over HR policies** plus an **action agent** with tool c
 
 > Confidentiality: uses **mock HR APIs**, fictional company data (e.g. Acme Corp), and authored sample policies — no real employer code or data.
 
-## Features
-
-| Capability | Description |
-|------------|-------------|
-| **RAG** | Answer questions on leave, travel, and other HR policies with **server-side citations** |
-| **Agent tools** | `searchHrPolicies`, `getLeaveBalance`, `getHolidayList`, `applyLeave` (optional: `raiseHelpdeskTicket`) |
-| **Confirmation** | Read tools run immediately; **write tools** create pending actions until the user confirms |
-| **RBAC** | JWT + roles `EMPLOYEE` / `HR_ADMIN`; `employeeId` always from security context |
-| **Eval** | Retrieval and agent evaluation harness (hit rate, tool-call accuracy) |
-
-**Example:** *"Mere kitne leaves bache hain aur kal ka apply kar do"* → agent checks balance and policy, then proposes leave apply for confirmation.
-
 ## Stack
 
 | Layer | Choice |
 |-------|--------|
-| Backend | Java 21, Spring Boot 3.4+, Spring AI, Spring Security |
+| Backend | Java 21, Spring Boot, Spring AI, Spring Security (JWT) |
 | AI | Gemini (MVP chat + embeddings); Ollama optional later |
-| Data | PostgreSQL + pgvector, JPA |
-| Frontend | React 18, Vite, TypeScript |
-| Tests | JUnit 5, Mockito, Testcontainers |
-
-## Architecture
-
-```text
-React Chat UI  →  Spring Boot API  →  RAG (pgvector) + Agent tools → Mock HR
-                      │
-                      ├── JWT / RBAC
-                      ├── Pending actions (confirm / cancel)
-                      └── Tool call audit log
-```
-
-Two behaviors in one chat:
-
-1. **RAG** — retrieve policy chunks → answer + cite document/section  
-2. **Agent** — model selects tools → reads execute now; writes wait for UI confirmation  
-
-See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the full design.
+| Data | PostgreSQL + pgvector |
+| Frontend | **Next.js** (JavaScript) + feature `actions/` |
 
 ## Repository layout
 
 ```text
-backend/           Spring Boot API (Security, RAG, Agent, Actions)
-frontend/          React (Vite) + TypeScript chat UI
-docs/policies/     Sample HR policy markdown (10–15 files)
-eval/              Retrieval + agent evaluation sets
-docker-compose.yml PostgreSQL + pgvector
-PROJECT_PLAN.md    Detailed plan and phases
+backend/                 Spring Boot API
+  src/main/java/.../
+    config/              App config, seed data
+    domain/              JPA entities + repositories
+    security/            JWT, filters, SecurityConfig
+    service/             Business logic
+    web/                 Controllers + DTOs
+frontend/                Next.js (JS)
+  app/                   Routes (App Router): /login, /chat
+  src/
+    api/httpClient.js    Low-level fetch only
+    actions/             Feature actions (auth, chat) — pages call these
+    components/          UI components
+docs/policies/           Sample HR policy markdown
+docker-compose.yml       PostgreSQL + pgvector
+PROJECT_PLAN.md          Full design + phases
 ```
 
 ## Prerequisites
 
-- Java 21+
+- Java 21+, Maven
 - Node.js 20+
-- Docker (for PostgreSQL + pgvector)
-- Gemini API key (for MVP)
+- Docker Desktop running
+- `GEMINI_API_KEY` set in your user environment
 
 ## Quick start
-
-> Scaffolding is in progress. Commands below are the target workflow once `backend/` and `frontend/` exist.
 
 ### 1. Database
 
@@ -75,9 +53,10 @@ docker compose up -d
 
 ```bash
 cd backend
-# set GEMINI_API_KEY (or provider key) in application.yml / env
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
+
+Health: http://localhost:8080/actuator/health
 
 ### 3. Frontend
 
@@ -87,38 +66,23 @@ npm install
 npm run dev
 ```
 
-### 4. Demo logins (planned seed users)
+UI: http://localhost:3000
 
-| User | Role |
-|------|------|
-| `priya.employee` | EMPLOYEE |
-| `admin.hr` | HR_ADMIN |
+### Demo logins
 
-## API (target)
+| User | Password | Role |
+|------|----------|------|
+| `priya.employee` | `password` | EMPLOYEE |
+| `admin.hr` | `password` | HR_ADMIN |
 
-| Method | Path | Role | Purpose |
-|--------|------|------|---------|
-| POST | `/api/auth/login` | Public | JWT |
-| POST | `/api/chat` | EMPLOYEE+ | Chat + citations + pending actions |
-| POST | `/api/actions/{id}/confirm` | EMPLOYEE+ | Execute pending write |
-| POST | `/api/actions/{id}/cancel` | EMPLOYEE+ | Discard pending write |
-| POST | `/api/admin/policies/ingest` | HR_ADMIN | Re-index policies |
+## Phase 1 status
 
-## Demo script (target)
-
-1. Login as employee  
-2. Ask a leave-policy question → see answer + citations  
-3. Ask for leave balance and apply for tomorrow  
-4. Confirm the pending action in the UI  
-5. (Optional) Login as HR admin and re-ingest policies  
-
-## Evaluation
-
-Eval sets under `eval/` measure retrieval quality and agent tool-call accuracy. Results and notes will be recorded here as the harness lands.
-
-## What I learned
-
-_Filled in as each phase ships — see learning log sections in [PROJECT_PLAN.md](./PROJECT_PLAN.md)._
+- [x] Monorepo `backend/` + `frontend/`
+- [x] JWT login + RBAC roles
+- [x] Next.js login + chat UI (actions layer, no direct API from pages)
+- [x] Gemini chat (no tools/RAG yet)
+- [ ] Phase 2: leave tools, holidays
+- [ ] Phase 3: RAG + citations
 
 ## License
 
