@@ -23,7 +23,7 @@ Portfolio project: **RAG over HR policies** plus an **action agent** with tool c
 | Backend | Java 21, Spring Boot 3.4+, Spring AI, Spring Security |
 | AI | Gemini (MVP chat + embeddings); Ollama optional later |
 | Data | PostgreSQL + pgvector, JPA |
-| Frontend | React 18, Vite, TypeScript |
+| Frontend | React 18, Next, JavaScript |
 | Tests | JUnit 5, Mockito, Testcontainers |
 
 ## Architecture
@@ -47,7 +47,7 @@ See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the full design.
 
 ```text
 backend/           Spring Boot API (Security, RAG, Agent, Actions)
-frontend/          React (Vite) + TypeScript chat UI
+frontend/          React (Next) + JavaScript chat UI
 docs/policies/     Sample HR policy markdown (10–15 files)
 eval/              Retrieval + agent evaluation sets
 docker-compose.yml PostgreSQL + pgvector
