@@ -17,25 +17,27 @@ spring:
         jdbc:
           time_zone: UTC
   ai:
+    # Same fail-fast retry for every chat message (leave balance, leave policy, hello, etc.)
+    retry:
+      max-attempts: 2
+      backoff:
+        initial-interval: 1s
+        multiplier: 1.5
+        max-interval: 3s
     model:
       chat: google-genai
-      embedding: google-genai
+      # embedding + pgvector enabled in Phase 3 (RAG)
+      embedding: none
     google:
       genai:
         api-key: ${GEMINI_API_KEY:}
         chat:
+          # Property path must be chat.model (not only options.model) or Spring AI keeps default gemini-2.0-flash
+          model: gemini-3.8-flash
+          temperature: 0.3
           options:
-            model: gemini-2.0-flash
+            model: gemini-3.8-flash
             temperature: 0.3
-        embedding:
-          options:
-            model: text-embedding-004
-    vectorstore:
-      pgvector:
-        initialize-schema: true
-        index-type: HNSW
-        distance-type: COSINE_DISTANCE
-        dimensions: 768
 
 app:
   jwt:

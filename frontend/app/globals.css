@@ -183,6 +183,17 @@ button:disabled {
   background: var(--assistant);
 }
 
+.bubble-pending {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.bubble-error {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger) 8%, var(--assistant));
+  color: var(--danger);
+}
+
 .chat-input {
   display: grid;
   grid-template-columns: 1fr auto;

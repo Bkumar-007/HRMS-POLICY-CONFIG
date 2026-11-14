@@ -53,7 +53,19 @@ export default function ChatPage() {
         },
       ]);
     } catch (err) {
-      setError(err.message || "Chat failed");
+      const message =
+        err.message ||
+        "The AI model is busy or unavailable right now. Please try again in a moment.";
+      setError(message);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          text: message,
+          error: true,
+        },
+      ]);
     } finally {
       setSending(false);
     }
@@ -68,7 +80,7 @@ export default function ChatPage() {
       <div className="chat-shell">
         <AppHeader displayName={session.displayName} role={session.role} />
         <section className="chat-panel">
-          <ChatMessageList messages={messages} />
+          <ChatMessageList messages={messages} sending={sending} />
           {error ? <p className="error">{error}</p> : null}
         </section>
         <ChatInput onSend={handleSend} disabled={sending} />
