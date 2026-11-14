@@ -73,7 +73,7 @@ flowchart TB
 | Path | Purpose |
 |------|---------|
 | `backend/` | Spring Boot 3.4+, Spring AI, Security, JPA |
-| `frontend/` | React (Vite) + TypeScript chat UI (keep it thin) |
+| `frontend/` | React (Next) + JavaScript chat UI (keep it thin) |
 | `docs/policies/` | **10–15** sample policies (markdown/text you write) |
 | `eval/` | Retrieval and agent evaluation sets + runner |
 | `docker-compose.yml` | PostgreSQL + pgvector |

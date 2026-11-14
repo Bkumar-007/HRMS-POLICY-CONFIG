@@ -1,0 +1,58 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hr-assistant
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hr_assistant
+    username: hr_user
+    password: hr_pass
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  ai:
+    model:
+      chat: google-genai
+      embedding: google-genai
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:}
+        chat:
+          options:
+            model: gemini-2.0-flash
+            temperature: 0.3
+        embedding:
+          options:
+            model: text-embedding-004
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 768
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:acme-hr-assistant-dev-secret-change-me-32chars-min}
+    expiration-ms: 86400000
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://127.0.0.1:3000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.acme.hrassistant: INFO
+    org.springframework.ai: INFO

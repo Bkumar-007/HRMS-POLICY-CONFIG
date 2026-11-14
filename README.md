@@ -10,12 +10,36 @@ Portfolio project: **RAG over HR policies** plus an **action agent** with tool c
 |-------|--------|
 | Backend | Java 21, Spring Boot, Spring AI, Spring Security (JWT) |
 | AI | Gemini (MVP chat + embeddings); Ollama optional later |
+<<<<<<< HEAD
 | Data | PostgreSQL + pgvector |
 | Frontend | **Next.js** (JavaScript) + feature `actions/` |
+=======
+| Data | PostgreSQL + pgvector, JPA |
+| Frontend | React 18, Next, JavaScript |
+| Tests | JUnit 5, Mockito, Testcontainers |
+
+## Architecture
+
+```text
+React Chat UI  →  Spring Boot API  →  RAG (pgvector) + Agent tools → Mock HR
+                      │
+                      ├── JWT / RBAC
+                      ├── Pending actions (confirm / cancel)
+                      └── Tool call audit log
+```
+
+Two behaviors in one chat:
+
+1. **RAG** — retrieve policy chunks → answer + cite document/section  
+2. **Agent** — model selects tools → reads execute now; writes wait for UI confirmation  
+
+See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the full design.
+>>>>>>> 9bffa84dc29defcfc089ddbe67a1aeb830959368
 
 ## Repository layout
 
 ```text
+<<<<<<< HEAD
 backend/                 Spring Boot API
   src/main/java/.../
     config/              App config, seed data
@@ -32,6 +56,14 @@ frontend/                Next.js (JS)
 docs/policies/           Sample HR policy markdown
 docker-compose.yml       PostgreSQL + pgvector
 PROJECT_PLAN.md          Full design + phases
+=======
+backend/           Spring Boot API (Security, RAG, Agent, Actions)
+frontend/          React (Next) + JavaScript chat UI
+docs/policies/     Sample HR policy markdown (10–15 files)
+eval/              Retrieval + agent evaluation sets
+docker-compose.yml PostgreSQL + pgvector
+PROJECT_PLAN.md    Detailed plan and phases
+>>>>>>> 9bffa84dc29defcfc089ddbe67a1aeb830959368
 ```
 
 ## Prerequisites
