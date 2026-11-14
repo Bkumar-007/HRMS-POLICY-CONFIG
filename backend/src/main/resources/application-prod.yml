@@ -1,0 +1,15 @@
+# Activated with SPRING_PROFILES_ACTIVE=prod (live)
+# Datasource / JWT / Gemini / CORS come from env (Azure PG hr_prod)
+# JWT_SECRET must be set — do not rely on the local default.
+
+spring:
+  jpa:
+    hibernate:
+      # MVP: update. Switch to validate once Flyway/Liquibase is added.
+      ddl-auto: update
+
+logging:
+  level:
+    com.acme.hrassistant: INFO
+    org.springframework.ai: WARN
+    root: WARN

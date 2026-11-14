@@ -1,0 +1,11 @@
+# Activated with SPRING_PROFILES_ACTIVE=dev
+# Datasource / JWT / Gemini / CORS come from env (Azure PG hr_dev / local)
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    com.acme.hrassistant: DEBUG

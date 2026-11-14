@@ -309,13 +309,13 @@ README table: eval set size, metric, result, what changed between runs.
 
 ### Phase 2 — Mock HR + read tools (1 week)
 
-- [ ] JPA entities + seed data (employees with grade/location)
-- [ ] `getLeaveBalance`, `getHolidayList`
-- [ ] ChatClient + `@Tool` wiring (no RAG yet)
-- [ ] `employeeId` from security context only
-- [ ] Server-side `conversationId` / chat memory
-- [ ] `ToolCallLog` table + logging
-- [ ] Learning log: how tool calling works
+- [x] JPA entities + seed data (employees with grade/location)
+- [x] `getLeaveBalance`, `getHolidayList`
+- [x] ChatClient + `@Tool` wiring (no RAG yet)
+- [x] `employeeId` from security context only
+- [x] Server-side `conversationId` / chat memory
+- [x] `ToolCallLog` table + logging
+- [x] Learning log: how tool calling works
 
 ### Phase 3 — RAG + citations (1.5–2 weeks)
 

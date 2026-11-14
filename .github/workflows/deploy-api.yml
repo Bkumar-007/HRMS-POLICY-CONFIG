@@ -1,0 +1,140 @@
+name: Deploy API
+
+# Branch → environment mapping:
+#   develop → dev
+#   uat     → uat
+#   main    → prod
+#
+# Prerequisites (once per GitHub Environment: dev / uat / prod):
+#   Secrets:
+#     AZURE_CREDENTIALS          — service principal JSON for azure/login
+#     ACR_LOGIN_SERVER           — e.g. myregistry.azurecr.io
+#     ACR_USERNAME
+#     ACR_PASSWORD
+#     SPRING_DATASOURCE_URL      — Azure Flexible Server JDBC for this env
+#                                  (hr_dev / hr_uat / hr_prod on one free B1ms server)
+#     SPRING_DATASOURCE_USERNAME
+#     SPRING_DATASOURCE_PASSWORD
+#     JWT_SECRET
+#     GEMINI_API_KEY
+#     APP_CORS_ALLOWED_ORIGINS   — matching Vercel origin(s), comma-separated
+#   Variables:
+#     AZURE_RESOURCE_GROUP
+#     CONTAINER_APP_NAME         — e.g. hr-api-dev
+#     CONTAINER_APP_ENVIRONMENT  — Container Apps Environment name
+#     IMAGE_NAME                 — optional; defaults to hr-assistant-api
+#
+# Free-tier note: prefer ghcr.io for images; one Flexible Server B1ms;
+# start with a single Container App (dev). See docs/DEPLOY.md.
+
+on:
+  push:
+    branches: [develop, uat, main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  resolve-env:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.map.outputs.environment }}
+      spring_profile: ${{ steps.map.outputs.spring_profile }}
+    steps:
+      - id: map
+        run: |
+          case "${{ github.ref_name }}" in
+            develop)
+              echo "environment=dev" >> "$GITHUB_OUTPUT"
+              echo "spring_profile=dev" >> "$GITHUB_OUTPUT"
+              ;;
+            uat)
+              echo "environment=uat" >> "$GITHUB_OUTPUT"
+              echo "spring_profile=uat" >> "$GITHUB_OUTPUT"
+              ;;
+            main)
+              echo "environment=prod" >> "$GITHUB_OUTPUT"
+              echo "spring_profile=prod" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported branch: ${{ github.ref_name }}"
+              exit 1
+              ;;
+          esac
+
+  build-and-deploy:
+    needs: resolve-env
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SPRING_PROFILE: ${{ needs.resolve-env.outputs.spring_profile }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image name
+        run: |
+          if [ -n "${{ vars.IMAGE_NAME }}" ]; then
+            echo "IMAGE_NAME=${{ vars.IMAGE_NAME }}" >> "$GITHUB_ENV"
+          else
+            echo "IMAGE_NAME=hr-assistant-api" >> "$GITHUB_ENV"
+          fi
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push image
+        run: |
+          IMAGE="${{ secrets.ACR_LOGIN_SERVER }}/${IMAGE_NAME}:${SPRING_PROFILE}-${{ github.sha }}"
+          IMAGE_LATEST="${{ secrets.ACR_LOGIN_SERVER }}/${IMAGE_NAME}:${SPRING_PROFILE}"
+          docker build -t "$IMAGE" -t "$IMAGE_LATEST" backend
+          docker push "$IMAGE"
+          docker push "$IMAGE_LATEST"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Sync Container App secrets
+        # Create the Container App once (see docs/DEPLOY.md); this updates secret values on each deploy.
+        run: |
+          az containerapp secret set \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --secrets \
+              spring-datasource-url="${{ secrets.SPRING_DATASOURCE_URL }}" \
+              spring-datasource-username="${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
+              spring-datasource-password="${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
+              jwt-secret="${{ secrets.JWT_SECRET }}" \
+              gemini-api-key="${{ secrets.GEMINI_API_KEY }}" \
+              app-cors-allowed-origins="${{ secrets.APP_CORS_ALLOWED_ORIGINS }}"
+
+      - name: Deploy Container App
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+          containerAppName: ${{ vars.CONTAINER_APP_NAME }}
+          containerAppEnvironment: ${{ vars.CONTAINER_APP_ENVIRONMENT }}
+          imageToDeploy: ${{ env.IMAGE }}
+          targetPort: 8080
+          environmentVariables: |
+            SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILE }}
+            SPRING_DATASOURCE_URL=secretref:spring-datasource-url
+            SPRING_DATASOURCE_USERNAME=secretref:spring-datasource-username
+            SPRING_DATASOURCE_PASSWORD=secretref:spring-datasource-password
+            JWT_SECRET=secretref:jwt-secret
+            GEMINI_API_KEY=secretref:gemini-api-key
+            APP_CORS_ALLOWED_ORIGINS=secretref:app-cors-allowed-origins

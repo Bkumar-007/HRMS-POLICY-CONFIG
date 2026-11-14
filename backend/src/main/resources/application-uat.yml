@@ -1,0 +1,12 @@
+# Activated with SPRING_PROFILES_ACTIVE=uat
+# Datasource / JWT / Gemini / CORS come from env (Azure PG hr_uat)
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    com.acme.hrassistant: INFO
+    org.springframework.ai: INFO
