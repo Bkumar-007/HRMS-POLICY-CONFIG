@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Button from "@component/common/Button";
 
 export default function PolicyUploadForm({ onUpload }) {
   const [name, setName] = useState("");
@@ -43,8 +44,8 @@ export default function PolicyUploadForm({ onUpload }) {
   return (
     <form className="policy-upload" onSubmit={handleSubmit}>
       <h2>Upload policy</h2>
-      <label>
-        Display name
+      <label className="field">
+        <span className="field-label">Display name</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -53,8 +54,10 @@ export default function PolicyUploadForm({ onUpload }) {
           required
         />
       </label>
-      <label>
-        Policy file (.md, .txt, .pdf, .doc, .docx, .odt, .rtf, .html)
+      <label className="field">
+        <span className="field-label">
+          Policy file (.md, .txt, .pdf, .doc, .docx, .odt, .rtf, .html)
+        </span>
         <input
           type="file"
           accept=".md,.markdown,.txt,.pdf,.doc,.docx,.odt,.rtf,.html,.htm,text/markdown,text/plain,text/html,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,application/rtf"
@@ -63,23 +66,23 @@ export default function PolicyUploadForm({ onUpload }) {
         />
       </label>
       <div className="policy-upload-row">
-        <label>
-          Effective date (optional)
+        <label className="field">
+          <span className="field-label">Effective date (optional)</span>
           <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} />
         </label>
-        <label>
-          Grade filter (optional)
+        <label className="field">
+          <span className="field-label">Grade filter (optional)</span>
           <input value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="G4" />
         </label>
-        <label>
-          Location filter (optional)
+        <label className="field">
+          <span className="field-label">Location filter (optional)</span>
           <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Pune" />
         </label>
       </div>
       {localError ? <p className="error">{localError}</p> : null}
-      <button type="submit" disabled={submitting}>
+      <Button type="submit" icon="upload" loading={submitting} disabled={submitting}>
         {submitting ? "Uploading & indexing..." : "Upload & ingest"}
-      </button>
+      </Button>
     </form>
   );
 }

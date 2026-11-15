@@ -18,6 +18,10 @@ public class AppProperties {
     private final Cache cache = new Cache();
     private final Llm llm = new Llm();
     private final Chat chat = new Chat();
+    private final Otp otp = new Otp();
+    private final Twilio twilio = new Twilio();
+    private final Fast2sms fast2sms = new Fast2sms();
+    private final Mail mail = new Mail();
 
     public Jwt getJwt() {
         return jwt;
@@ -57,6 +61,22 @@ public class AppProperties {
 
     public Chat getChat() {
         return chat;
+    }
+
+    public Otp getOtp() {
+        return otp;
+    }
+
+    public Twilio getTwilio() {
+        return twilio;
+    }
+
+    public Fast2sms getFast2sms() {
+        return fast2sms;
+    }
+
+    public Mail getMail() {
+        return mail;
     }
 
     public static class Jwt {
@@ -194,6 +214,7 @@ public class AppProperties {
         private int loginPerMinute = 10;
         private int chatPerMinute = 20;
         private int policyWritePerMinute = 5;
+        private int passwordResetPerMinute = 8;
 
         public int getLoginPerMinute() {
             return loginPerMinute;
@@ -217,6 +238,136 @@ public class AppProperties {
 
         public void setPolicyWritePerMinute(int policyWritePerMinute) {
             this.policyWritePerMinute = policyWritePerMinute;
+        }
+
+        public int getPasswordResetPerMinute() {
+            return passwordResetPerMinute;
+        }
+
+        public void setPasswordResetPerMinute(int passwordResetPerMinute) {
+            this.passwordResetPerMinute = passwordResetPerMinute;
+        }
+    }
+
+    public static class Otp {
+        private int length = 6;
+        private long ttlMinutes = 10;
+        private long resetTokenTtlMinutes = 15;
+        private int maxAttempts = 5;
+        /** When Twilio/SMTP is missing, log OTP and return it in the API for local testing. */
+        private boolean devFallback = true;
+
+        public int getLength() {
+            return length;
+        }
+
+        public void setLength(int length) {
+            this.length = length;
+        }
+
+        public long getTtlMinutes() {
+            return ttlMinutes;
+        }
+
+        public void setTtlMinutes(long ttlMinutes) {
+            this.ttlMinutes = ttlMinutes;
+        }
+
+        public long getResetTokenTtlMinutes() {
+            return resetTokenTtlMinutes;
+        }
+
+        public void setResetTokenTtlMinutes(long resetTokenTtlMinutes) {
+            this.resetTokenTtlMinutes = resetTokenTtlMinutes;
+        }
+
+        public int getMaxAttempts() {
+            return maxAttempts;
+        }
+
+        public void setMaxAttempts(int maxAttempts) {
+            this.maxAttempts = maxAttempts;
+        }
+
+        public boolean isDevFallback() {
+            return devFallback;
+        }
+
+        public void setDevFallback(boolean devFallback) {
+            this.devFallback = devFallback;
+        }
+    }
+
+    public static class Twilio {
+        private String accountSid = "";
+        private String authToken = "";
+        private String fromNumber = "";
+
+        public String getAccountSid() {
+            return accountSid;
+        }
+
+        public void setAccountSid(String accountSid) {
+            this.accountSid = accountSid;
+        }
+
+        public String getAuthToken() {
+            return authToken;
+        }
+
+        public void setAuthToken(String authToken) {
+            this.authToken = authToken;
+        }
+
+        public String getFromNumber() {
+            return fromNumber;
+        }
+
+        public void setFromNumber(String fromNumber) {
+            this.fromNumber = fromNumber;
+        }
+    }
+
+    /** India-friendly SMS via Fast2SMS — only needs one API key. */
+    public static class Fast2sms {
+        private String apiKey = "";
+        private String senderId = "FSTSMS";
+        private String route = "q";
+
+        public String getApiKey() {
+            return apiKey;
+        }
+
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
+
+        public String getSenderId() {
+            return senderId;
+        }
+
+        public void setSenderId(String senderId) {
+            this.senderId = senderId;
+        }
+
+        public String getRoute() {
+            return route;
+        }
+
+        public void setRoute(String route) {
+            this.route = route;
+        }
+    }
+
+    public static class Mail {
+        private String from = "";
+
+        public String getFrom() {
+            return from;
+        }
+
+        public void setFrom(String from) {
+            this.from = from;
         }
     }
 

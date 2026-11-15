@@ -46,6 +46,15 @@ public class LeaveRequest {
     @Column(name = "pending_action_id", length = 36)
     private String pendingActionId;
 
+    @Column(name = "reviewer_id")
+    private Long reviewerId;
+
+    @Column(name = "review_note", length = 500)
+    private String reviewNote;
+
+    @Column(name = "reviewed_at")
+    private Instant reviewedAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -66,7 +75,7 @@ public class LeaveRequest {
         this.endDate = endDate;
         this.days = days;
         this.reason = reason;
-        this.status = LeaveRequestStatus.SUBMITTED;
+        this.status = LeaveRequestStatus.PENDING_APPROVAL;
         this.pendingActionId = pendingActionId;
         this.createdAt = Instant.now();
     }
@@ -107,7 +116,51 @@ public class LeaveRequest {
         return pendingActionId;
     }
 
+    public Long getReviewerId() {
+        return reviewerId;
+    }
+
+    public String getReviewNote() {
+        return reviewNote;
+    }
+
+    public Instant getReviewedAt() {
+        return reviewedAt;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isAwaitingApproval() {
+        return status == LeaveRequestStatus.PENDING_APPROVAL || status == LeaveRequestStatus.SUBMITTED;
+    }
+
+    public void approve(Long reviewerId, String note) {
+        if (!isAwaitingApproval()) {
+            throw new IllegalStateException("Leave request is not awaiting approval");
+        }
+        this.status = LeaveRequestStatus.APPROVED;
+        this.reviewerId = reviewerId;
+        this.reviewNote = note;
+        this.reviewedAt = Instant.now();
+    }
+
+    public void reject(Long reviewerId, String note) {
+        if (!isAwaitingApproval()) {
+            throw new IllegalStateException("Leave request is not awaiting approval");
+        }
+        this.status = LeaveRequestStatus.REJECTED;
+        this.reviewerId = reviewerId;
+        this.reviewNote = note;
+        this.reviewedAt = Instant.now();
+    }
+
+    public void cancel() {
+        if (!isAwaitingApproval()) {
+            throw new IllegalStateException("Only pending leave can be cancelled");
+        }
+        this.status = LeaveRequestStatus.CANCELLED;
+        this.reviewedAt = Instant.now();
     }
 }

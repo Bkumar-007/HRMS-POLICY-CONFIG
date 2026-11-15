@@ -10,6 +10,17 @@ spring.ai.model.embedding.text: google-genai
 spring:
   application:
     name: hr-assistant
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   servlet:
     multipart:
       max-file-size: 5MB
@@ -92,6 +103,7 @@ app:
     login-per-minute: ${APP_RATELIMIT_LOGIN_PER_MINUTE:10}
     chat-per-minute: ${APP_RATELIMIT_CHAT_PER_MINUTE:20}
     policy-write-per-minute: ${APP_RATELIMIT_POLICY_WRITE_PER_MINUTE:5}
+    password-reset-per-minute: ${APP_RATELIMIT_PASSWORD_RESET_PER_MINUTE:8}
   cache:
     policies-ttl: ${APP_CACHE_POLICIES_TTL:5m}
     holidays-ttl: ${APP_CACHE_HOLIDAYS_TTL:1h}
@@ -99,6 +111,24 @@ app:
     read-timeout-ms: ${APP_LLM_READ_TIMEOUT_MS:60000}
   chat:
     max-message-length: ${APP_CHAT_MAX_MESSAGE_LENGTH:4000}
+  otp:
+    length: ${APP_OTP_LENGTH:6}
+    ttl-minutes: ${APP_OTP_TTL_MINUTES:10}
+    reset-token-ttl-minutes: ${APP_OTP_RESET_TOKEN_TTL_MINUTES:15}
+    max-attempts: ${APP_OTP_MAX_ATTEMPTS:5}
+    # When no SMS/email provider is set, accept fixed demo OTP 123456
+    dev-fallback: ${APP_OTP_DEV_FALLBACK:true}
+  # Preferred for India SMS testing — only one API key needed
+  fast2sms:
+    api-key: ${FAST2SMS_API_KEY:}
+    sender-id: ${FAST2SMS_SENDER_ID:FSTSMS}
+    route: ${FAST2SMS_ROUTE:q}
+  twilio:
+    account-sid: ${TWILIO_ACCOUNT_SID:}
+    auth-token: ${TWILIO_AUTH_TOKEN:}
+    from-number: ${TWILIO_FROM_NUMBER:}
+  mail:
+    from: ${MAIL_FROM:${SPRING_MAIL_USERNAME:}}
 
 management:
   endpoints:
@@ -109,6 +139,10 @@ management:
     health:
       probes:
         enabled: true
+  health:
+    # Local demos often have no real SMTP; don't mark the whole app DOWN.
+    mail:
+      enabled: false
   metrics:
     tags:
       application: hr-assistant

@@ -60,6 +60,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler({TransientAiException.class, NonTransientAiException.class})
     public ResponseEntity<ApiResponse<Void>> handleAiUnavailable(Exception ex, HttpServletRequest request) {
         return build(HttpStatus.SERVICE_UNAVAILABLE, AI_UNAVAILABLE);

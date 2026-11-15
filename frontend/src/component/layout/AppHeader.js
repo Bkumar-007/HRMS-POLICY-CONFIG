@@ -1,32 +1,25 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { logoutAction } from "@store/auth/authActions";
+/**
+ * @deprecated Prefer AppShell for authenticated pages.
+ * Kept as a thin wrapper so older imports keep working.
+ */
+import AppShell from "./AppShell";
 
-export default function AppHeader({ displayName, role }) {
-  const router = useRouter();
-
-  function handleLogout() {
-    logoutAction();
-    router.replace("/login");
+export default function AppHeader({ displayName, role, title = "Recoil HR", subtitle, actions, children }) {
+  if (children) {
+    return (
+      <AppShell
+        displayName={displayName}
+        role={role}
+        title={title}
+        subtitle={subtitle}
+        actions={actions}
+      >
+        {children}
+      </AppShell>
+    );
   }
 
-  return (
-    <header className="app-header">
-      <div>
-        <p className="brand">Recoil HR Assistant</p>
-        <p className="muted">
-          {displayName} · {role}
-        </p>
-      </div>
-      <nav className="app-nav">
-        <Link href="/chat">Chat</Link>
-        <Link href="/policies">Policies</Link>
-        <button type="button" className="btn-secondary" onClick={handleLogout}>
-          Log out
-        </button>
-      </nav>
-    </header>
-  );
+  return null;
 }

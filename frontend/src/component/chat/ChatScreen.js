@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSessionAction } from "@store/auth/authActions";
 import { sendChatAction } from "@store/chat/chatActions";
 import { cancelAction, confirmAction } from "@store/actions/actionsActions";
-import AppHeader from "@component/layout/AppHeader";
+import AppShell from "@component/layout/AppShell";
 import ChatInput from "@component/chat/ChatInput";
 import ChatMessageList from "@component/chat/ChatMessageList";
 
@@ -130,21 +130,23 @@ export default function ChatScreen() {
   }
 
   return (
-    <div className="page page-chat">
-      <div className="chat-shell">
-        <AppHeader displayName={session.displayName} role={session.role} />
-        <section className="chat-panel">
-          <ChatMessageList
-            messages={messages}
-            sending={sending}
-            actionBusyId={actionBusyId}
-            onConfirmAction={handleConfirmAction}
-            onCancelAction={handleCancelAction}
-          />
-          {error ? <p className="error">{error}</p> : null}
-        </section>
-        <ChatInput onSend={handleSend} disabled={sending || !!actionBusyId} />
-      </div>
-    </div>
+    <AppShell
+      displayName={session.displayName}
+      role={session.role}
+      title="HR Assistant"
+      subtitle="Ask about leave, holidays, policies, or raise a helpdesk request."
+    >
+      <section className="chat-panel">
+        <ChatMessageList
+          messages={messages}
+          sending={sending}
+          actionBusyId={actionBusyId}
+          onConfirmAction={handleConfirmAction}
+          onCancelAction={handleCancelAction}
+        />
+        {error ? <p className="error">{error}</p> : null}
+      </section>
+      <ChatInput onSend={handleSend} disabled={sending || !!actionBusyId} />
+    </AppShell>
   );
 }

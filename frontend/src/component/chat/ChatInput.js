@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Button from "@component/common/Button";
 
 export default function ChatInput({ onSend, disabled }) {
   const [text, setText] = useState("");
@@ -22,10 +23,11 @@ export default function ChatInput({ onSend, disabled }) {
         onChange={(e) => setText(e.target.value)}
         placeholder="Type a message..."
         disabled={disabled}
+        aria-label="Message"
       />
-      <button type="submit" disabled={disabled || !text.trim()}>
+      <Button type="submit" icon="send" disabled={disabled || !text.trim()}>
         Send
-      </button>
+      </Button>
     </form>
   );
 }

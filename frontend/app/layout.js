@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Acme HR Assistant",
-  description: "HR Policy Assistant + Action Agent demo",
+  title: "Recoil HR Portal",
+  description: "Employee HR portal — policy assistant and actions",
 };
 
 export default function RootLayout({ children }) {

@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "@component/common/Button";
+
 export default function ChatMessageList({
   messages,
   sending = false,
@@ -12,7 +14,8 @@ export default function ChatMessageList({
       <div className="chat-empty">
         Ask about leave balance, holidays, or HR policies (WFH, travel, expenses…).
         Policy answers include citations from the indexed library. Leave apply and
-        helpdesk tickets need Confirm / Cancel.
+        helpdesk tickets need Confirm / Cancel — leave then goes to your manager on
+        the Leave screen for approval.
       </div>
     );
   }
@@ -55,22 +58,20 @@ export default function ChatMessageList({
                       </p>
                     ) : (
                       <div className="pending-action-buttons">
-                        <button
-                          type="button"
-                          className="btn"
+                        <Button
                           disabled={busy || sending}
+                          loading={busy}
                           onClick={() => onConfirmAction?.(action.id, item.id)}
                         >
-                          {busy ? "Working…" : "Confirm"}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
+                          Confirm
+                        </Button>
+                        <Button
+                          variant="secondary"
                           disabled={busy || sending}
                           onClick={() => onCancelAction?.(action.id, item.id)}
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>

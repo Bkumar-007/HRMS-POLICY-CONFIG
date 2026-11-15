@@ -59,3 +59,50 @@ export async function fetchMeAction(token) {
     "GET",
   )(token);
 }
+
+export async function updateProfileAction(token, payload) {
+  const data = await commonRequest(
+    apiClient,
+    Route(routesMapping.auth.UpdateProfile),
+    payload,
+    "PUT",
+  )(token);
+
+  // Keep session display name in sync when profile changes
+  const session = getSessionAction();
+  if (session && data?.displayName) {
+    const next = { ...session, displayName: data.displayName };
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
+    }
+  }
+
+  return data;
+}
+
+export async function forgotPasswordAction(username, channel) {
+  return commonRequest(
+    apiClient,
+    Route(routesMapping.auth.ForgotPassword),
+    { username, channel },
+    "POST",
+  )();
+}
+
+export async function verifyOtpAction(username, otp) {
+  return commonRequest(
+    apiClient,
+    Route(routesMapping.auth.VerifyOtp),
+    { username, otp },
+    "POST",
+  )();
+}
+
+export async function resetPasswordAction(username, resetToken, newPassword) {
+  return commonRequest(
+    apiClient,
+    Route(routesMapping.auth.ResetPassword),
+    { username, resetToken, newPassword },
+    "POST",
+  )();
+}

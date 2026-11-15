@@ -169,10 +169,11 @@ public class PendingActionService {
                 pending.markConfirmed(toJson(Map.of("leaveRequestId", lr.getId())));
                 pendingActionRepository.save(pending);
             }
-            return ActionResultDto.confirmed(pending, "Leave already submitted (id=" + lr.getId() + ")");
+            return ActionResultDto.confirmed(
+                    pending, "Leave already submitted for approval (id=" + lr.getId() + ")");
         }
 
-        LeaveRequest leaveRequest = leaveApplicationService.apply(
+        LeaveRequest leaveRequest = leaveApplicationService.submit(
                 pending.getEmployeeId(),
                 payload.employeeLocation(),
                 request,
@@ -181,14 +182,16 @@ public class PendingActionService {
         String result = toJson(Map.of(
                 "leaveRequestId", leaveRequest.getId(),
                 "leaveType", leaveRequest.getLeaveType().name(),
-                "days", leaveRequest.getDays()));
+                "days", leaveRequest.getDays(),
+                "status", leaveRequest.getStatus().name()));
         pending.markConfirmed(result);
         pendingActionRepository.save(pending);
         return ActionResultDto.confirmed(
                 pending,
-                "Leave submitted: " + leaveRequest.getLeaveType()
+                "Leave submitted for manager approval: " + leaveRequest.getLeaveType()
                         + " " + leaveRequest.getStartDate() + " → " + leaveRequest.getEndDate()
-                        + " (" + leaveRequest.getDays() + " day(s))");
+                        + " (" + leaveRequest.getDays() + " day(s)). "
+                        + "Your manager will approve or reject it from the Leave screen.");
     }
 
     private ActionResultDto confirmHelpdesk(PendingAction pending) {

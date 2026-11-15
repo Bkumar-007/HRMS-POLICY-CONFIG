@@ -1,10 +1,14 @@
 package com.acme.hrassistant.web;
 
-import com.acme.hrassistant.security.EmployeePrincipal;
+import com.acme.hrassistant.application.people.ProfileService;
 import com.acme.hrassistant.security.SecurityUtils;
 import com.acme.hrassistant.web.dto.ApiResponse;
-import java.util.Map;
+import com.acme.hrassistant.web.dto.EmployeeProfileDto;
+import com.acme.hrassistant.web.dto.UpdateProfileRequest;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,16 +16,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/me")
 public class MeController {
 
+    private final ProfileService profileService;
+
+    public MeController(ProfileService profileService) {
+        this.profileService = profileService;
+    }
+
     @GetMapping
-    public ApiResponse<Map<String, Object>> me() {
-        EmployeePrincipal user = SecurityUtils.currentUser();
-        Map<String, Object> profile = Map.of(
-                "employeeId", user.getEmployeeId(),
-                "username", user.getUsername(),
-                "displayName", user.getDisplayName(),
-                "role", user.getRole().name(),
-                "grade", user.getGrade(),
-                "location", user.getLocation());
-        return ApiResponse.ok(profile);
+    public ApiResponse<EmployeeProfileDto> me() {
+        return ApiResponse.ok(profileService.getProfile(SecurityUtils.currentUser()));
+    }
+
+    @PutMapping("/profile")
+    public ApiResponse<EmployeeProfileDto> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        return ApiResponse.ok(profileService.updateProfile(SecurityUtils.currentUser(), request));
     }
 }

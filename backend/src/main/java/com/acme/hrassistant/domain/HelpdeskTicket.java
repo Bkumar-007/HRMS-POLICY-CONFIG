@@ -66,6 +66,10 @@ public class HelpdeskTicket {
         return status;
     }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getPendingActionId() {
         return pendingActionId;
     }

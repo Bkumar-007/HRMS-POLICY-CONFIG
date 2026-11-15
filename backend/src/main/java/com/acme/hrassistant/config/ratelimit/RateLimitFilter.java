@@ -66,6 +66,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     appProperties.getRatelimit().getLoginPerMinute(),
                     "login");
         }
+        if (HttpMethod.POST.matches(method)
+                && (path.equals("/api/auth/forgot-password")
+                        || path.equals("/api/auth/verify-otp")
+                        || path.equals("/api/auth/reset-password"))) {
+            return new LimitSpec(
+                    "password-reset:" + clientIp(request),
+                    appProperties.getRatelimit().getPasswordResetPerMinute(),
+                    "password-reset");
+        }
         if (HttpMethod.POST.matches(method) && path.equals("/api/chat")) {
             return new LimitSpec(
                     "chat:" + identityOrIp(request),
