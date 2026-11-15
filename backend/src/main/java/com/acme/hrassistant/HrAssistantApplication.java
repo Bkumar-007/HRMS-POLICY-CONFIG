@@ -1,14 +1,12 @@
 package com.acme.hrassistant;
 
-import org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Phase 1: chat + JWT only. PgVector auto-config is excluded until RAG (Phase 3)
- * when an EmbeddingModel bean is wired.
+ * HR Policy Assistant — chat, tools, and RAG over an uploadable policy library (pgvector).
  */
-@SpringBootApplication(exclude = PgVectorStoreAutoConfiguration.class)
+@SpringBootApplication
 public class HrAssistantApplication {
 
     public static void main(String[] args) {

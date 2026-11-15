@@ -1,9 +1,19 @@
 server:
   port: ${SERVER_PORT:8080}
 
+# Flat keys: Ollama auto-config uses matchIfMissing=true on spring.ai.model.embedding.
+# Nested YAML (embedding.text) leaves that property "missing" and would start both beans.
+spring.ai.model.chat: google-genai
+spring.ai.model.embedding: none
+spring.ai.model.embedding.text: google-genai
+
 spring:
   application:
     name: hr-assistant
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hr_assistant}
     username: ${SPRING_DATASOURCE_USERNAME:hr_user}
@@ -31,10 +41,13 @@ spring:
           jdbc:
             # Postgres is not "embedded"; always create SPRING_AI_CHAT_MEMORY
             initialize-schema: always
-    model:
-      chat: google-genai
-      # embedding + pgvector enabled in Phase 3 (RAG)
-      embedding: none
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        # Must match embedding output dimensions below
+        dimensions: 768
     google:
       genai:
         api-key: ${GEMINI_API_KEY:}
@@ -46,6 +59,14 @@ spring:
           options:
             model: ${GEMINI_CHAT_MODEL:gemini-3.5-flash-lite}
             temperature: 0.3
+        embedding:
+          api-key: ${GEMINI_API_KEY:}
+          text:
+            options:
+              # text-embedding-004 retired (404); use current Gemini embedding model
+              model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
+              dimensions: 768
+
 
 app:
   jwt:
@@ -54,6 +75,15 @@ app:
   cors:
     # Comma-separated origins via APP_CORS_ALLOWED_ORIGINS (platform injects per env)
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  upload:
+    # Plain files on disk — open even when Docker/Postgres is stopped
+    local-dir: ${APP_UPLOAD_LOCAL_DIR:./data/policies}
+    max-bytes: ${APP_UPLOAD_MAX_BYTES:1048576}
+    allowed-types: text/markdown,text/plain
+  rag:
+    top-k: ${APP_RAG_TOP_K:5}
+    similarity-threshold: ${APP_RAG_SIMILARITY_THRESHOLD:0.45}
+    seed-on-empty: ${APP_RAG_SEED_ON_EMPTY:true}
 
 management:
   endpoints:

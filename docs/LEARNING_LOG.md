@@ -27,3 +27,11 @@ Short notes captured while building each phase (interview talking points).
 
 - Every endpoint returns `{ code, data, message, count? }` — **code 1 = success**, **code 0 = failure**.
 - Keeps the UI contract stable as new modules (policies, actions) are added; list endpoints can set `count`.
+
+## Phase 3 — Uploadable policy library + RAG + citations
+
+- **Embeddings** turn text into vectors; **pgvector** stores them so similar questions retrieve nearby chunks (cosine distance).
+- **Ingest flow:** upload/seed → store raw file → chunk by headings/size → embed → write metadata (`policyId`, `policyName`, `section`, optional grade/location) → status `INDEXED`.
+- **Delete/re-ingest** removes old chunks for that `policyId` first so the index never drifts from the library.
+- **`searchHrPolicies`** is a tool (not a hidden prompt dump): the model must call it for policy Q&A; the server builds **citations** from retrieval metadata so the UI never trusts invented source names.
+- Quality checks for retrieval stay **ad-hoc / live demos** (upload a policy, ask about it, confirm citation) — no checked-in question bank.

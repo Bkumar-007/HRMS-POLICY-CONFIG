@@ -36,21 +36,22 @@ See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the full design.
 ```text
 backend/                 Spring Boot API
   src/main/java/.../
-    application/         Feature use-cases (auth, chat, leave, holidays; policies/actions stubs)
-    agent/               @Tool methods
+    application/         Feature use-cases (auth, chat, leave, holidays, policies; actions stub)
+    agent/               @Tool methods (leave, holidays, searchHrPolicies)
+    rag/                 Chunk, ingest, search, citations
     config/              App config, AI, seed data
     domain/              JPA entities + repositories
     mockhr/              Fake HR services
     security/            JWT, filters, SecurityConfig
     web/                 Thin controllers + DTOs
 frontend/                Next.js (JS) — modular folders
-  app/                   Thin routes: /login, /chat
-  src/component/         Screens by module (auth, chat, layout, common)
+  app/                   Thin routes: /login, /chat, /policies
+  src/component/         Screens by module (auth, chat, policies, layout, common)
   src/configuration/     AppSetting (API base URL)
-  store/                 Feature *Actions (auth, chat, policies, actions stubs)
+  store/                 Feature *Actions (auth, chat, policies, actions stub)
   utils/api.js           HTTP client
   utils/apiRoutes/       routesMapping + Route() — all backend paths
-docs/policies/           Sample HR policy markdown (seed)
+docs/policies/           Sample HR policy markdown (seed source)
 docs/*-ARCHITECTURE-GUIDE.md  Folder-structure references
 docs/LEARNING_LOG.md     Per-phase notes
 docker-compose.yml       PostgreSQL + pgvector
@@ -88,6 +89,8 @@ mvn spring-boot:run
 
 Health: http://localhost:8080/actuator/health
 
+Uploaded policies are also mirrored under `backend/data/policies/{id}/` (markdown + `meta.json`) so you can open them on disk even if Docker/Postgres is stopped. Chat/RAG still needs the DB while the API is running.
+
 #### Local chat with Ollama (when Gemini quota is hit)
 
 ```bash
@@ -118,10 +121,12 @@ UI: http://localhost:3000
 | `rahul.employee` | `password` | EMPLOYEE | G3 / Mumbai |
 | `admin.hr` | `password` | HR_ADMIN | G4 / Pune |
 
-### Phase 2 chat demos
+### Phase 2–3 chat demos
 
 - *"How many casual leaves do I have?"* → `getLeaveBalance`
 - *"What are the holidays in November 2026?"* → `getHolidayList`
+- *"Can I work from home on Fridays?"* → `searchHrPolicies` + citations
+- Login as `admin.hr` → **Policies** → upload a named `.md` policy → ask about it in chat
 - Follow-up in the same thread uses server-side conversation memory
 
 ## Phase status
@@ -129,7 +134,7 @@ UI: http://localhost:3000
 - [x] Phase 1: Monorepo, JWT login + RBAC, Next.js login/chat, Gemini chat
 - [x] Phase 2: Mock HR, `getLeaveBalance` / `getHolidayList`, tool audit, JDBC chat memory
 - [x] Phase 2.5: Folder structure alignment (backend `application/`, frontend `apiRoutes` / `store` / `component`)
-- [ ] Phase 3: Uploadable policy library + RAG + citations (not leave/travel-only)
+- [x] Phase 3: Uploadable policy library + RAG + citations (not leave/travel-only)
 - [ ] Phase 4: Write tools + confirmation
 - [ ] Phase 5: Tests + portfolio polish (rate limit, cache, timeouts, …)
 

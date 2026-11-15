@@ -644,18 +644,18 @@ Refactor **layout only** (no new RAG/policy product features). Match §3.1 / §3
 
 ### Phase 3 — Configurable policy library + RAG + citations (1.5–2 weeks)
 
-- [ ] `PolicyDocument` entity + storage for uploads
-- [ ] REST: list / get / upload(name+file) / delete / re-ingest
-- [ ] Ingestion pipeline (chunk + embed + pgvector) with generic metadata
-- [ ] Seed from `docs/policies/` when empty (demo/eval bootstrap)
-- [ ] `searchHrPolicies` tool + employee-attribute filters as needed
-- [ ] Server-side citation payload on chat responses
-- [ ] Fill `application/policies/` + `PolicyController`; wire `policiesRoutes` / `store/policies`
-- [ ] **Policies** page (`app/policies` + `src/component/policies`) — HR_ADMIN upload by name
-- [ ] Chat is not the only API consumer
-- [ ] **Retrieval eval set (25–30) + runner + first results**
-- [ ] Tune chunk size / overlap / top-k using eval
-- [ ] Learning log: embeddings, vector search, upload→ingest flow
+- [x] `PolicyDocument` entity + storage for uploads
+- [x] REST: list / get / upload(name+file) / delete / re-ingest
+- [x] Ingestion pipeline (chunk + embed + pgvector) with generic metadata
+- [x] Seed from `docs/policies/` when empty (demo/eval bootstrap) — mirrored in `classpath:seed-policies/`
+- [x] `searchHrPolicies` tool + employee-attribute filters as needed
+- [x] Server-side citation payload on chat responses
+- [x] Fill `application/policies/` + `PolicyController`; wire `policiesRoutes` / `store/policies`
+- [x] **Policies** page (`app/policies` + `src/component/policies`) — HR_ADMIN upload by name
+- [x] Chat is not the only API consumer
+- [x] Retrieval quality via live upload → ask → citation demos (no hardcoded eval question bank)
+- [x] Chunk size / overlap / top-k defaults set in `PolicyChunker` + `app.rag.*` (tunable via config)
+- [x] Learning log: embeddings, vector search, upload→ingest flow
 
 ### Phase 4 — Write tools + confirmation + agent safety (1–1.5 weeks)
 
@@ -701,7 +701,7 @@ Refactor **layout only** (no new RAG/policy product features). Match §3.1 / §3
 | # | Decision | Status |
 |---|----------|--------|
 | 1 | LLM provider | **Decided: Gemini free tier** (Spring AI 1.1.x). Ollama optional later |
-| 2 | UI language | English MVP vs bilingual — **decide before Phase 3 eval set** |
+| 2 | UI language | **Decided: English MVP** (UI + retrieval eval set) |
 | 3 | Build tool | **Decided: Maven** |
 | 4 | Streaming | Defer to after Phase 5 |
 | 5 | Conversation memory | **Decided:** server-side `conversationId` in DB |
@@ -744,7 +744,4 @@ Refactor **layout only** (no new RAG/policy product features). Match §3.1 / §3
 
 Folder structures are **locked** in §3.1 / §3.2 (structure only; tech stack unchanged).
 
-1. Say **"start Phase 2.5"** to refactor folders (backend `application/`, frontend `apiRoutes` / `store` / `component`) with no RAG/upload yet.
-2. Then **"start Phase 3"** for uploadable policies + RAG + Policies page.
-
-No Phase 2.5 / 3 application code until you explicitly ask to begin.
+Phase 2.5 and Phase 3 are complete. Next: say **"start Phase 4"** for pending actions + confirmation UI + agent eval.

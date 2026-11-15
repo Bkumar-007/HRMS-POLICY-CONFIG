@@ -1,3 +1,6 @@
+<!-- name: Leave Policy -->
+<!-- effective: 2026-01-01 -->
+
 # Acme Corp — Leave Policy (v1.0)
 
 Fictional sample policy for portfolio demos. Not affiliated with any real employer.
