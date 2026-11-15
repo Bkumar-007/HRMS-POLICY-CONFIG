@@ -6,11 +6,11 @@ import com.acme.hrassistant.domain.PolicyDocument;
 import com.acme.hrassistant.domain.PolicyDocumentRepository;
 import com.acme.hrassistant.domain.PolicyStatus;
 import com.acme.hrassistant.rag.LocalPolicyFileStore;
+import com.acme.hrassistant.rag.PolicyContentReader;
 import com.acme.hrassistant.rag.PolicyIngestionService;
+import com.acme.hrassistant.rag.PolicyUploadFormats;
 import com.acme.hrassistant.security.EmployeePrincipal;
 import com.acme.hrassistant.web.dto.PolicyDocumentDto;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -27,16 +27,19 @@ public class UploadPolicyCommand {
     private final PolicyDocumentRepository policyDocumentRepository;
     private final PolicyIngestionService policyIngestionService;
     private final LocalPolicyFileStore localPolicyFileStore;
+    private final PolicyContentReader policyContentReader;
     private final AppProperties appProperties;
 
     public UploadPolicyCommand(
             PolicyDocumentRepository policyDocumentRepository,
             PolicyIngestionService policyIngestionService,
             LocalPolicyFileStore localPolicyFileStore,
+            PolicyContentReader policyContentReader,
             AppProperties appProperties) {
         this.policyDocumentRepository = policyDocumentRepository;
         this.policyIngestionService = policyIngestionService;
         this.localPolicyFileStore = localPolicyFileStore;
+        this.policyContentReader = policyContentReader;
         this.appProperties = appProperties;
     }
 
@@ -50,12 +53,7 @@ public class UploadPolicyCommand {
             String location) {
         validate(name, file);
 
-        String text;
-        try {
-            text = new String(file.getBytes(), StandardCharsets.UTF_8);
-        } catch (IOException ex) {
-            throw new IllegalStateException("Failed to read upload: " + ex.getMessage(), ex);
-        }
+        String text = policyContentReader.readText(file);
         if (text.isBlank()) {
             throw new IllegalStateException("Policy file is empty");
         }
@@ -92,28 +90,35 @@ public class UploadPolicyCommand {
         if (file.getSize() > maxBytes) {
             throw new IllegalStateException("File exceeds max size of " + maxBytes + " bytes");
         }
+
+        String original = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        if (!PolicyUploadFormats.isSupportedExtension(original)) {
+            throw new IllegalStateException(
+                    "Unsupported file type. Allowed: " + PolicyUploadFormats.humanList());
+        }
+
         String contentType = resolveContentType(file);
         Set<String> allowed = Arrays.stream(appProperties.getUpload().getAllowedTypes().split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .map(s -> s.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
-        if (!allowed.contains(contentType.toLowerCase(Locale.ROOT))) {
+        // Extension already validated; accept browser MIME quirks if extension is known.
+        String byExt = PolicyUploadFormats.mimeForFilename(original);
+        if (!allowed.contains(contentType.toLowerCase(Locale.ROOT))
+                && (byExt == null || !allowed.contains(byExt.toLowerCase(Locale.ROOT)))) {
             throw new IllegalStateException("Unsupported content type: " + contentType + ". Allowed: " + allowed);
-        }
-        String original = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
-        if (!(original.endsWith(".md") || original.endsWith(".markdown") || original.endsWith(".txt"))) {
-            throw new IllegalStateException("Only .md / .txt uploads are supported in MVP");
         }
     }
 
     private static String resolveContentType(MultipartFile file) {
+        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename();
+        String byExt = PolicyUploadFormats.mimeForFilename(name);
+        if (byExt != null) {
+            return byExt;
+        }
         String contentType = file.getContentType();
         if (contentType == null || contentType.isBlank() || "application/octet-stream".equals(contentType)) {
-            String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
-            if (name.endsWith(".md") || name.endsWith(".markdown")) {
-                return "text/markdown";
-            }
             return "text/plain";
         }
         return contentType;

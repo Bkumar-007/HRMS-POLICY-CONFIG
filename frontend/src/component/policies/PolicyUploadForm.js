@@ -54,10 +54,10 @@ export default function PolicyUploadForm({ onUpload }) {
         />
       </label>
       <label>
-        Markdown / text file
+        Policy file (.md, .txt, .pdf, .doc, .docx, .odt, .rtf, .html)
         <input
           type="file"
-          accept=".md,.markdown,.txt,text/markdown,text/plain"
+          accept=".md,.markdown,.txt,.pdf,.doc,.docx,.odt,.rtf,.html,.htm,text/markdown,text/plain,text/html,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,application/rtf"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           required
         />

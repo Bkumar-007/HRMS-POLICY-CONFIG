@@ -7,11 +7,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "policy_documents")
@@ -30,8 +31,12 @@ public class PolicyDocument {
     @Column(nullable = false, length = 100)
     private String contentType;
 
-    /** Full uploaded/seeded document text — stored in Postgres (local DB). */
-    @Lob
+    /**
+     * Full uploaded/seeded document text — stored in Postgres as TEXT.
+     * Do not use {@code @Lob}: on PostgreSQL that maps to OID large-objects and stores
+     * numeric OIDs instead of the markdown body.
+     */
+    @JdbcTypeCode(SqlTypes.LONG32VARCHAR)
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 

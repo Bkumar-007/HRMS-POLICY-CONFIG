@@ -108,8 +108,8 @@ public class AppProperties {
     public static class Upload {
         /** Local mirror of policy files (readable even when Docker DB is down). */
         private String localDir = "./data/policies";
-        private long maxBytes = 1_048_576L;
-        private String allowedTypes = "text/markdown,text/plain";
+        private long maxBytes = 5_242_880L;
+        private String allowedTypes = com.acme.hrassistant.rag.PolicyUploadFormats.DEFAULT_ALLOWED_TYPES;
 
         public String getLocalDir() {
             return localDir;

@@ -12,8 +12,8 @@ spring:
     name: hr-assistant
   servlet:
     multipart:
-      max-file-size: 2MB
-      max-request-size: 2MB
+      max-file-size: 5MB
+      max-request-size: 6MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hr_assistant}
     username: ${SPRING_DATASOURCE_USERNAME:hr_user}
@@ -78,8 +78,8 @@ app:
   upload:
     # Plain files on disk — open even when Docker/Postgres is stopped
     local-dir: ${APP_UPLOAD_LOCAL_DIR:./data/policies}
-    max-bytes: ${APP_UPLOAD_MAX_BYTES:1048576}
-    allowed-types: text/markdown,text/plain
+    max-bytes: ${APP_UPLOAD_MAX_BYTES:5242880}
+    allowed-types: ${APP_UPLOAD_ALLOWED_TYPES:text/markdown,text/plain,text/html,application/rtf,text/rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text}
   rag:
     top-k: ${APP_RAG_TOP_K:5}
     similarity-threshold: ${APP_RAG_SIMILARITY_THRESHOLD:0.45}
