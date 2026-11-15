@@ -1,11 +1,21 @@
-/**
- * Phase 4 placeholder — pending action confirm/cancel will live here.
- */
+import { apiClient } from "@utils/api";
+import { routesMapping, Route } from "@utils/apiRoutes";
+import { commonRequest } from "@utils/helpers";
 
-export async function confirmAction(_token, _id) {
-  throw new Error("Actions API not implemented yet (Phase 4)");
+export async function confirmAction(token, id) {
+  return commonRequest(
+    apiClient,
+    Route(`${routesMapping.actions.Confirm}/${id}/confirm`),
+    {},
+    "POST",
+  )(token);
 }
 
-export async function cancelAction(_token, _id) {
-  throw new Error("Actions API not implemented yet (Phase 4)");
+export async function cancelAction(token, id) {
+  return commonRequest(
+    apiClient,
+    Route(`${routesMapping.actions.Cancel}/${id}/cancel`),
+    {},
+    "POST",
+  )(token);
 }

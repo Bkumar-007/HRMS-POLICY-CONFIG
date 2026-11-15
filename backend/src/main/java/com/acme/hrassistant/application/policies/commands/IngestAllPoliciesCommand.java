@@ -1,5 +1,6 @@
 package com.acme.hrassistant.application.policies.commands;
 
+import com.acme.hrassistant.config.cache.CacheConfig;
 import com.acme.hrassistant.domain.PolicyDocument;
 import com.acme.hrassistant.domain.PolicyDocumentRepository;
 import com.acme.hrassistant.rag.PolicyIngestionService;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +27,7 @@ public class IngestAllPoliciesCommand {
         this.policyIngestionService = policyIngestionService;
     }
 
+    @CacheEvict(cacheNames = CacheConfig.POLICIES, allEntries = true)
     public List<PolicyDocumentDto> execute() {
         List<PolicyDocumentDto> results = new ArrayList<>();
         for (PolicyDocument policy : policyDocumentRepository.findAllByOrderByCreatedAtDesc()) {

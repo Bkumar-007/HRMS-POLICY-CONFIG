@@ -35,3 +35,17 @@ Short notes captured while building each phase (interview talking points).
 - **Delete/re-ingest** removes old chunks for that `policyId` first so the index never drifts from the library.
 - **`searchHrPolicies`** is a tool (not a hidden prompt dump): the model must call it for policy Q&A; the server builds **citations** from retrieval metadata so the UI never trusts invented source names.
 - Quality checks for retrieval stay **ad-hoc / live demos** (upload a policy, ask about it, confirm citation) — no checked-in question bank.
+
+## Phase 4 — Write tools + confirmation + agent safety
+
+- **Agent loop:** the model may call several tools; we cap iterations with a per-request `ToolIterationGuard` so a confused model cannot spin forever.
+- **Write tools never mutate state immediately.** `applyLeave` / `raiseHelpdeskTicket` validate → insert `PendingAction` → UI Confirm/Cancel. Confirm **re-validates**, loads payload from the DB (not the client), and is **idempotent**.
+- **Leave rules live in Java** (`LeaveRules`): balance, holidays, consecutive CL, sick-cert threshold, EL notice, March blackout — unit-tested, not trusted to the prompt.
+- **Agent eval:** `eval/agent-eval.json` (25 scenarios) + heuristic runner / test for a baseline hit-rate without burning Gemini quota.
+
+## Phase 5 — Tests + portfolio polish
+
+- **Rate limit** (Bucket4j): login by IP; chat / policy-write by employeeId → **429**.
+- **Cache** (Caffeine): policy list + holidays; **never** leave balance or chat answers; evict on ingest/upload/delete.
+- **LLM timeout:** custom GenAI `Client` with explicit `HttpOptions.timeout` so calls fail instead of hanging.
+- **Tests:** leave-rule unit tests; Testcontainers ITs for confirm/idempotency/foreign action/non-admin upload (skip if Docker is down).

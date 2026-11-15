@@ -84,16 +84,34 @@ app:
     top-k: ${APP_RAG_TOP_K:5}
     similarity-threshold: ${APP_RAG_SIMILARITY_THRESHOLD:0.45}
     seed-on-empty: ${APP_RAG_SEED_ON_EMPTY:true}
+  agent:
+    max-tool-iterations: ${APP_AGENT_MAX_TOOL_ITERATIONS:8}
+  actions:
+    pending-ttl-minutes: ${APP_ACTIONS_PENDING_TTL_MINUTES:30}
+  ratelimit:
+    login-per-minute: ${APP_RATELIMIT_LOGIN_PER_MINUTE:10}
+    chat-per-minute: ${APP_RATELIMIT_CHAT_PER_MINUTE:20}
+    policy-write-per-minute: ${APP_RATELIMIT_POLICY_WRITE_PER_MINUTE:5}
+  cache:
+    policies-ttl: ${APP_CACHE_POLICIES_TTL:5m}
+    holidays-ttl: ${APP_CACHE_HOLIDAYS_TTL:1h}
+  llm:
+    read-timeout-ms: ${APP_LLM_READ_TIMEOUT_MS:60000}
+  chat:
+    max-message-length: ${APP_CHAT_MAX_MESSAGE_LENGTH:4000}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
   endpoint:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      application: hr-assistant
 
 logging:
   level:

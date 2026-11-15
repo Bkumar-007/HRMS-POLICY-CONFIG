@@ -1,10 +1,12 @@
 package com.acme.hrassistant.application.policies.commands;
 
+import com.acme.hrassistant.config.cache.CacheConfig;
 import com.acme.hrassistant.domain.PolicyDocument;
 import com.acme.hrassistant.domain.PolicyDocumentRepository;
 import com.acme.hrassistant.rag.LocalPolicyFileStore;
 import com.acme.hrassistant.rag.PolicyIngestionService;
 import java.util.UUID;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class DeletePolicyCommand {
         this.localPolicyFileStore = localPolicyFileStore;
     }
 
+    @CacheEvict(cacheNames = CacheConfig.POLICIES, allEntries = true)
     @Transactional
     public void execute(UUID id) {
         PolicyDocument policy = policyDocumentRepository.findById(id)

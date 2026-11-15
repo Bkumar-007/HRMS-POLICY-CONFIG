@@ -659,25 +659,25 @@ Refactor **layout only** (no new RAG/policy product features). Match §3.1 / §3
 
 ### Phase 4 — Write tools + confirmation + agent safety (1–1.5 weeks)
 
-- [ ] `PendingAction` entity + APIs
-- [ ] `applyLeave` validation (pure Java rules)
-- [ ] Confirmation hardening (ownership, expiry, re-validate, idempotency)
-- [ ] Max iterations limit
-- [ ] React confirmation UI + `store/actions` / `actionsRoutes`
-- [ ] **Agent eval set (20–30) + runner + first results**
-- [ ] Learning log: agent loop, guardrails
+- [x] `PendingAction` entity + APIs
+- [x] `applyLeave` validation (pure Java rules)
+- [x] Confirmation hardening (ownership, expiry, re-validate, idempotency)
+- [x] Max iterations limit
+- [x] React confirmation UI + `store/actions` / `actionsRoutes`
+- [x] **Agent eval set (20–30) + runner + first results**
+- [x] Learning log: agent loop, guardrails
 
 ### Phase 5 — Tests + portfolio polish (1 week)
 
-- [ ] Unit tests for leave rules
-- [ ] Integration tests with Testcontainers: upload→ingest→search, confirm flow, idempotency
-- [ ] Security tests: foreign pending action; non-admin upload denied
-- [ ] **Rate limit** on login/chat/policy-write (429 + tests)
-- [ ] **Cache** for policy list / holidays (Caffeine); invalidate on ingest
-- [ ] Gemini **read timeout** + keep short retries (no multi-minute hangs)
-- [ ] Upload size/type validation
-- [ ] Actuator metrics (chat latency, 429s, cache) — optional stretch: Redis
-- [ ] README: architecture, eval table, **demo script**, "What I learned"
+- [x] Unit tests for leave rules
+- [x] Integration tests with Testcontainers: confirm flow, idempotency (upload→search live still demo-driven)
+- [x] Security tests: foreign pending action; non-admin upload denied
+- [x] **Rate limit** on login/chat/policy-write (429)
+- [x] **Cache** for policy list / holidays (Caffeine); invalidate on ingest
+- [x] Gemini **read timeout** + keep short retries (no multi-minute hangs)
+- [x] Upload size/type validation
+- [x] Actuator metrics (chat latency, 429s) — optional stretch: Redis
+- [x] README: architecture, eval table, **demo script**, "What I learned"
 
 ---
 
@@ -705,7 +705,7 @@ Refactor **layout only** (no new RAG/policy product features). Match §3.1 / §3
 | 3 | Build tool | **Decided: Maven** |
 | 4 | Streaming | Defer to after Phase 5 |
 | 5 | Conversation memory | **Decided:** server-side `conversationId` in DB |
-| 6 | `raiseHelpdeskTicket` | Keep or cut — **decide before Phase 4** |
+| 6 | `raiseHelpdeskTicket` | **Decided: keep** — gated pending action to show confirmation generalizes |
 | 7 | Policy source of truth | **Decided: upload-first library** + optional `docs/policies/` seed |
 | 8 | Frontend folder layout | **Decided: modular Next.js layout** — `app/` thin pages, `src/component/`, `store/*Actions`, `utils/apiRoutes` + `routesMapping`/`Route()` (stack stays Next.js JS; Redux optional) |
 | 9 | Backend folder layout | **Decided: layered API / application layout** — thin `web/` controllers + `application/<feature>/` queries/commands (stack stays Spring Boot, not ASP.NET/MediatR) |
@@ -744,4 +744,4 @@ Refactor **layout only** (no new RAG/policy product features). Match §3.1 / §3
 
 Folder structures are **locked** in §3.1 / §3.2 (structure only; tech stack unchanged).
 
-Phase 2.5 and Phase 3 are complete. Next: say **"start Phase 4"** for pending actions + confirmation UI + agent eval.
+Phases **0–5 are complete** for the MVP portfolio scope. Optional stretch: live Gemini agent-eval scoring, Redis multi-instance cache, SSE streaming.

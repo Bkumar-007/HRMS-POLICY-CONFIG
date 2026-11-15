@@ -1,5 +1,6 @@
 package com.acme.hrassistant.web;
 
+import com.acme.hrassistant.config.ratelimit.RateLimitExceededException;
 import com.acme.hrassistant.web.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.ai.retry.NonTransientAiException;
@@ -29,6 +30,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
             AccessDeniedException ex, HttpServletRequest request) {
         return build(HttpStatus.FORBIDDEN, "Access denied");
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRateLimit(
+            RateLimitExceededException ex, HttpServletRequest request) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -1,6 +1,7 @@
 package com.acme.hrassistant.application.policies.commands;
 
 import com.acme.hrassistant.config.AppProperties;
+import com.acme.hrassistant.config.cache.CacheConfig;
 import com.acme.hrassistant.domain.PolicyDocument;
 import com.acme.hrassistant.domain.PolicyDocumentRepository;
 import com.acme.hrassistant.domain.PolicyStatus;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +40,7 @@ public class UploadPolicyCommand {
         this.appProperties = appProperties;
     }
 
+    @CacheEvict(cacheNames = CacheConfig.POLICIES, allEntries = true)
     public PolicyDocumentDto execute(
             EmployeePrincipal admin,
             String name,

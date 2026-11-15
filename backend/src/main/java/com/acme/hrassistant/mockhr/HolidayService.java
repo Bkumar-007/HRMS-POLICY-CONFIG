@@ -1,9 +1,11 @@
 package com.acme.hrassistant.mockhr;
 
+import com.acme.hrassistant.config.cache.CacheConfig;
 import com.acme.hrassistant.domain.Holiday;
 import com.acme.hrassistant.domain.HolidayRepository;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,9 @@ public class HolidayService {
         this.holidayRepository = holidayRepository;
     }
 
+    @Cacheable(
+            cacheNames = CacheConfig.HOLIDAYS,
+            key = "#year + '-' + (#month == null ? 0 : #month) + '-' + (#employeeLocation == null ? '' : #employeeLocation)")
     @Transactional(readOnly = true)
     public List<Holiday> getHolidays(int year, Integer month, String employeeLocation) {
         LocalDate from;

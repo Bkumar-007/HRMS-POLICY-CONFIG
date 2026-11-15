@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSessionAction } from "@store/auth/authActions";
 import { sendChatAction } from "@store/chat/chatActions";
+import { cancelAction, confirmAction } from "@store/actions/actionsActions";
 import AppHeader from "@component/layout/AppHeader";
 import ChatInput from "@component/chat/ChatInput";
 import ChatMessageList from "@component/chat/ChatMessageList";
@@ -14,6 +15,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState("");
   const [sending, setSending] = useState(false);
+  const [actionBusyId, setActionBusyId] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -51,6 +53,8 @@ export default function ChatScreen() {
           role: "assistant",
           text: response.message || "",
           citations: response.citations || [],
+          pendingActions: response.pendingActions || [],
+          actionResults: {},
         },
       ]);
     } catch (err) {
@@ -72,6 +76,55 @@ export default function ChatScreen() {
     }
   }
 
+  function patchActionResult(messageId, actionId, result) {
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id !== messageId) {
+          return msg;
+        }
+        return {
+          ...msg,
+          actionResults: {
+            ...(msg.actionResults || {}),
+            [actionId]: result,
+          },
+        };
+      }),
+    );
+  }
+
+  async function handleConfirmAction(actionId, messageId) {
+    if (!session?.token) {
+      return;
+    }
+    setActionBusyId(actionId);
+    setError("");
+    try {
+      const result = await confirmAction(session.token, actionId);
+      patchActionResult(messageId, actionId, result);
+    } catch (err) {
+      setError(err.message || "Confirm failed");
+    } finally {
+      setActionBusyId("");
+    }
+  }
+
+  async function handleCancelAction(actionId, messageId) {
+    if (!session?.token) {
+      return;
+    }
+    setActionBusyId(actionId);
+    setError("");
+    try {
+      const result = await cancelAction(session.token, actionId);
+      patchActionResult(messageId, actionId, result);
+    } catch (err) {
+      setError(err.message || "Cancel failed");
+    } finally {
+      setActionBusyId("");
+    }
+  }
+
   if (!session) {
     return <div className="page">Loading...</div>;
   }
@@ -81,10 +134,16 @@ export default function ChatScreen() {
       <div className="chat-shell">
         <AppHeader displayName={session.displayName} role={session.role} />
         <section className="chat-panel">
-          <ChatMessageList messages={messages} sending={sending} />
+          <ChatMessageList
+            messages={messages}
+            sending={sending}
+            actionBusyId={actionBusyId}
+            onConfirmAction={handleConfirmAction}
+            onCancelAction={handleCancelAction}
+          />
           {error ? <p className="error">{error}</p> : null}
         </section>
-        <ChatInput onSend={handleSend} disabled={sending} />
+        <ChatInput onSend={handleSend} disabled={sending || !!actionBusyId} />
       </div>
     </div>
   );

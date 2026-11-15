@@ -15,7 +15,7 @@ export default function AppHeader({ displayName, role }) {
   return (
     <header className="app-header">
       <div>
-        <p className="brand">Acme HR Assistant</p>
+        <p className="brand">Recoil HR Assistant</p>
         <p className="muted">
           {displayName} · {role}
         </p>
