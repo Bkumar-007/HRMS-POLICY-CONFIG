@@ -50,6 +50,7 @@ export default function ChatScreen() {
           id: `a-${Date.now()}`,
           role: "assistant",
           text: response.message || "",
+          citations: response.citations || [],
         },
       ]);
     } catch (err) {

@@ -9,6 +9,8 @@ public class AppProperties {
 
     private final Jwt jwt = new Jwt();
     private final Cors cors = new Cors();
+    private final Upload upload = new Upload();
+    private final Rag rag = new Rag();
 
     public Jwt getJwt() {
         return jwt;
@@ -16,6 +18,14 @@ public class AppProperties {
 
     public Cors getCors() {
         return cors;
+    }
+
+    public Upload getUpload() {
+        return upload;
+    }
+
+    public Rag getRag() {
+        return rag;
     }
 
     public static class Jwt {
@@ -61,6 +71,67 @@ public class AppProperties {
                 return;
             }
             this.allowedOrigins = allowedOrigins;
+        }
+    }
+
+    public static class Upload {
+        /** Local mirror of policy files (readable even when Docker DB is down). */
+        private String localDir = "./data/policies";
+        private long maxBytes = 1_048_576L;
+        private String allowedTypes = "text/markdown,text/plain";
+
+        public String getLocalDir() {
+            return localDir;
+        }
+
+        public void setLocalDir(String localDir) {
+            this.localDir = localDir;
+        }
+
+        public long getMaxBytes() {
+            return maxBytes;
+        }
+
+        public void setMaxBytes(long maxBytes) {
+            this.maxBytes = maxBytes;
+        }
+
+        public String getAllowedTypes() {
+            return allowedTypes;
+        }
+
+        public void setAllowedTypes(String allowedTypes) {
+            this.allowedTypes = allowedTypes;
+        }
+    }
+
+    public static class Rag {
+        private int topK = 5;
+        private double similarityThreshold = 0.45;
+        private boolean seedOnEmpty = true;
+
+        public int getTopK() {
+            return topK;
+        }
+
+        public void setTopK(int topK) {
+            this.topK = topK;
+        }
+
+        public double getSimilarityThreshold() {
+            return similarityThreshold;
+        }
+
+        public void setSimilarityThreshold(double similarityThreshold) {
+            this.similarityThreshold = similarityThreshold;
+        }
+
+        public boolean isSeedOnEmpty() {
+            return seedOnEmpty;
+        }
+
+        public void setSeedOnEmpty(boolean seedOnEmpty) {
+            this.seedOnEmpty = seedOnEmpty;
         }
     }
 }

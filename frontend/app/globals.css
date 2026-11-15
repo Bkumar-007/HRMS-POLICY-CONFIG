@@ -204,3 +204,146 @@ button:disabled {
   border-radius: 16px;
   box-shadow: var(--shadow);
 }
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-nav a {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.app-nav a:hover {
+  color: var(--accent);
+}
+
+.citations {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.citation-snippet {
+  color: var(--muted);
+}
+
+.policies-panel {
+  padding: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+.policies-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.policy-upload {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.policy-upload h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.policy-upload-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.policy-list {
+  overflow-x: auto;
+}
+
+.policy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.policy-table th,
+.policy-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.policy-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  background: color-mix(in srgb, var(--danger) 85%, #000);
+  color: #fff;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.status-indexed {
+  background: color-mix(in srgb, var(--accent) 12%, #fff);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.status-pending {
+  background: #fff8e8;
+}
+
+.status-failed {
+  background: color-mix(in srgb, var(--danger) 10%, #fff);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  color: var(--danger);
+}
+
+.status-disabled {
+  background: #eef1f4;
+  color: var(--muted);
+}
+
+.policy-row-disabled {
+  opacity: 0.72;
+}
+
+.policies-heading-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.policy-error {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  .policy-upload-row {
+    grid-template-columns: 1fr;
+  }
+
+  .policies-heading {
+    flex-direction: column;
+  }
+}

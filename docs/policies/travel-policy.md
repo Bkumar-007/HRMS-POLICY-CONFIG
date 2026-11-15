@@ -1,3 +1,6 @@
+<!-- name: Travel Policy -->
+<!-- effective: 2026-01-01 -->
+
 # Acme Corp — Travel Policy (v1.0)
 
 Fictional sample policy for portfolio demos.

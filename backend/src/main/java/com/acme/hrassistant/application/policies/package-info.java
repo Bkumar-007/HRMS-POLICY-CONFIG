@@ -1,4 +1,4 @@
 /**
- * Policy library use-cases (upload, list, ingest). Implemented in Phase 3.
+ * Policy library use-cases: list/get, upload, delete, ingest.
  */
 package com.acme.hrassistant.application.policies;

@@ -1,6 +1,7 @@
 package com.acme.hrassistant.application.chat;
 
 import com.acme.hrassistant.agent.HrToolContextKeys;
+import com.acme.hrassistant.rag.CitationCollector;
 import com.acme.hrassistant.security.EmployeePrincipal;
 import com.acme.hrassistant.web.dto.ChatRequest;
 import com.acme.hrassistant.web.dto.ChatResponse;
@@ -11,7 +12,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.stereotype.Service;
 
 /**
- * Gemini chat with read-only HR tools, JDBC conversation memory, and tool audit log.
+ * Gemini chat with HR tools (leave, holidays, policy RAG), JDBC memory, and server-built citations.
  */
 @Service
 public class ChatService {
@@ -28,6 +29,8 @@ public class ChatService {
         String conversationId = chatConversationService.resolveConversationId(
                 user.getEmployeeId(), request.conversationId());
 
+        CitationCollector citationCollector = new CitationCollector();
+
         String reply = chatClient.prompt()
                 .user(u -> u.text("""
                         Employee: %s (grade=%s, location=%s, role=%s)
@@ -41,7 +44,9 @@ public class ChatService {
                 .toolContext(Map.of(
                         HrToolContextKeys.EMPLOYEE_ID, user.getEmployeeId(),
                         HrToolContextKeys.CONVERSATION_ID, conversationId,
-                        HrToolContextKeys.EMPLOYEE_LOCATION, user.getLocation()))
+                        HrToolContextKeys.EMPLOYEE_LOCATION, user.getLocation(),
+                        HrToolContextKeys.EMPLOYEE_GRADE, user.getGrade(),
+                        HrToolContextKeys.CITATION_COLLECTOR, citationCollector))
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .call()
                 .content();
@@ -49,7 +54,7 @@ public class ChatService {
         return new ChatResponse(
                 conversationId,
                 reply == null ? "" : reply,
-                List.of(),
+                citationCollector.getCitations(),
                 List.of());
     }
 }
