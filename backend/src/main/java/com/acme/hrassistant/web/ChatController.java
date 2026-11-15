@@ -1,7 +1,8 @@
 package com.acme.hrassistant.web;
 
+import com.acme.hrassistant.application.chat.ChatService;
 import com.acme.hrassistant.security.SecurityUtils;
-import com.acme.hrassistant.service.ChatService;
+import com.acme.hrassistant.web.dto.ApiResponse;
 import com.acme.hrassistant.web.dto.ChatRequest;
 import com.acme.hrassistant.web.dto.ChatResponse;
 import jakarta.validation.Valid;
@@ -21,7 +22,7 @@ public class ChatController {
     }
 
     @PostMapping
-    public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-        return chatService.chat(SecurityUtils.currentUser(), request);
+    public ApiResponse<ChatResponse> chat(@Valid @RequestBody ChatRequest request) {
+        return ApiResponse.ok(chatService.chat(SecurityUtils.currentUser(), request));
     }
 }

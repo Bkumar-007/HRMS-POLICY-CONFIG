@@ -1,8 +1,7 @@
 package com.acme.hrassistant.web;
 
-import com.acme.hrassistant.web.dto.ApiError;
+import com.acme.hrassistant.web.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Instant;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
 import org.springframework.http.HttpStatus;
@@ -19,35 +18,39 @@ public class GlobalExceptionHandler {
             "The AI model is busy or unavailable right now. Please try again in a moment.";
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
-        return build(HttpStatus.UNAUTHORIZED, "Invalid username or password", request.getRequestURI());
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
+            BadCredentialsException ex, HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, "Invalid username or password");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleValidation(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(err -> err.getField() + " " + err.getDefaultMessage())
                 .orElse("Validation failed");
-        return build(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
+        return build(HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(
+            IllegalStateException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler({TransientAiException.class, NonTransientAiException.class})
-    public ResponseEntity<ApiError> handleAiUnavailable(Exception ex, HttpServletRequest request) {
-        return build(HttpStatus.SERVICE_UNAVAILABLE, AI_UNAVAILABLE, request.getRequestURI());
+    public ResponseEntity<ApiResponse<Void>> handleAiUnavailable(Exception ex, HttpServletRequest request) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, AI_UNAVAILABLE);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex, HttpServletRequest request) {
         if (isAiProviderFailure(ex)) {
-            return build(HttpStatus.SERVICE_UNAVAILABLE, AI_UNAVAILABLE, request.getRequestURI());
+            return build(HttpStatus.SERVICE_UNAVAILABLE, AI_UNAVAILABLE);
         }
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI());
+        String message = ex.getMessage() == null ? "Internal server error" : ex.getMessage();
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, message);
     }
 
     private boolean isAiProviderFailure(Throwable ex) {
@@ -66,8 +69,7 @@ public class GlobalExceptionHandler {
         return false;
     }
 
-    private ResponseEntity<ApiError> build(HttpStatus status, String message, String path) {
-        ApiError body = new ApiError(Instant.now(), status.value(), status.getReasonPhrase(), message, path);
-        return ResponseEntity.status(status).body(body);
+    private ResponseEntity<ApiResponse<Void>> build(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(ApiResponse.fail(message));
     }
 }

@@ -1,12 +1,16 @@
-import { httpRequest } from "../api/httpClient";
+import { apiClient } from "@utils/api";
+import { routesMapping, Route } from "@utils/apiRoutes";
+import { commonRequest } from "@utils/helpers";
 
 const SESSION_KEY = "hr_assistant_session";
 
 export async function loginAction(username, password) {
-  const data = await httpRequest("/api/auth/login", {
-    method: "POST",
-    body: { username, password },
-  });
+  const data = await commonRequest(
+    apiClient,
+    Route(routesMapping.auth.Login),
+    { username, password },
+    "POST",
+  )();
 
   const session = {
     token: data.token,
@@ -48,8 +52,10 @@ export function getSessionAction() {
 }
 
 export async function fetchMeAction(token) {
-  return httpRequest("/api/me", {
-    method: "GET",
-    token,
-  });
+  return commonRequest(
+    apiClient,
+    Route(routesMapping.auth.Me),
+    {},
+    "GET",
+  )(token);
 }

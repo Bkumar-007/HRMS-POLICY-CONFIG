@@ -1,10 +1,10 @@
 package com.acme.hrassistant.agent;
 
+import com.acme.hrassistant.application.chat.ToolCallAuditService;
+import com.acme.hrassistant.application.holidays.HolidayFacade;
+import com.acme.hrassistant.application.leave.LeaveBalanceFacade;
 import com.acme.hrassistant.domain.Holiday;
 import com.acme.hrassistant.domain.LeaveBalance;
-import com.acme.hrassistant.mockhr.HolidayService;
-import com.acme.hrassistant.mockhr.LeaveBalanceService;
-import com.acme.hrassistant.service.ToolCallAuditService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,21 +15,21 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 /**
- * Read-only HR tools for Phase 2. employeeId is never a model parameter — only ToolContext.
+ * Read-only HR tools. employeeId is never a model parameter — only ToolContext.
  */
 @Component
 public class HrTools {
 
-    private final LeaveBalanceService leaveBalanceService;
-    private final HolidayService holidayService;
+    private final LeaveBalanceFacade leaveBalanceFacade;
+    private final HolidayFacade holidayFacade;
     private final ToolCallAuditService toolCallAuditService;
 
     public HrTools(
-            LeaveBalanceService leaveBalanceService,
-            HolidayService holidayService,
+            LeaveBalanceFacade leaveBalanceFacade,
+            HolidayFacade holidayFacade,
             ToolCallAuditService toolCallAuditService) {
-        this.leaveBalanceService = leaveBalanceService;
-        this.holidayService = holidayService;
+        this.leaveBalanceFacade = leaveBalanceFacade;
+        this.holidayFacade = holidayFacade;
         this.toolCallAuditService = toolCallAuditService;
     }
 
@@ -42,7 +42,7 @@ public class HrTools {
         Long employeeId = requireEmployeeId(toolContext);
         String conversationId = requireConversationId(toolContext);
 
-        List<LeaveBalance> balances = leaveBalanceService.getBalancesForEmployee(employeeId);
+        List<LeaveBalance> balances = leaveBalanceFacade.getBalancesForEmployee(employeeId);
         String result;
         if (balances.isEmpty()) {
             result = "No leave balance records found for this employee for the current year.";
@@ -70,7 +70,7 @@ public class HrTools {
         String location = String.valueOf(toolContext.getContext().get(HrToolContextKeys.EMPLOYEE_LOCATION));
 
         Integer normalizedMonth = (month == null || month == 0) ? null : month;
-        List<Holiday> holidays = holidayService.getHolidays(year, normalizedMonth, location);
+        List<Holiday> holidays = holidayFacade.getHolidays(year, normalizedMonth, location);
 
         Map<String, Object> input = new LinkedHashMap<>();
         input.put("year", year);

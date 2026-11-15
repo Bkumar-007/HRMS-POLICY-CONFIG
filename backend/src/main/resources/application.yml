@@ -39,12 +39,12 @@ spring:
       genai:
         api-key: ${GEMINI_API_KEY:}
         chat:
-          # This API key only allows gemini-3.x (2.5 returns 404).
-          # Spring AI 1.1.1 preserves Gemini 3 thought signatures during tool loops.
-          model: gemini-3.8-flash
+          # Free-tier default: Flash-Lite (~higher RPD than gemini-3.8-flash's ~20/day).
+          # Override with GEMINI_CHAT_MODEL if needed. Tool calling supported.
+          model: ${GEMINI_CHAT_MODEL:gemini-3.5-flash-lite}
           temperature: 0.3
           options:
-            model: gemini-3.8-flash
+            model: ${GEMINI_CHAT_MODEL:gemini-3.5-flash-lite}
             temperature: 0.3
 
 app:

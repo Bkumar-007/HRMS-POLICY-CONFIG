@@ -12,8 +12,7 @@ RUN mvn -B -DskipTests package \
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
-RUN addgroup -S app && adduser -S app -G app \
-  && apk add --no-cache wget
+RUN addgroup -S app && adduser -S app -G app
 USER app
 
 COPY --from=build /workspace/app.jar /app/app.jar
@@ -23,7 +22,5 @@ EXPOSE 8080
 ENV JAVA_OPTS=""
 ENV SPRING_PROFILES_ACTIVE=dev
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:8080/actuator/health || exit 1
-
+# ACA / ACI probe the HTTP ingress; skip image HEALTHCHECK (avoids apk/wget on Alpine mirrors)
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

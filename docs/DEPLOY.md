@@ -3,6 +3,10 @@
 **Goal:** stay on **Azure free / free-account** resources only (no Neon).  
 This project uses **one Spring profile per environment**. Each API deploy gets its **own** secrets — do not use a single shared token that “picks” a database at runtime.
 
+> **Current recommended free path (after Flexible Server SKU issues):**  
+> Postgres = **Azure Container Instances** (`pgvector/pgvector`) + API = **Container Apps** + images in **ACR**.  
+> Script: [`scripts/deploy-api-dev.ps1`](../scripts/deploy-api-dev.ps1).
+
 | Git branch | Spring profile (`SPRING_PROFILES_ACTIVE`) | Meaning |
 |------------|-------------------------------------------|---------|
 | `develop`  | `dev`                                     | Development |
