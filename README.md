@@ -36,20 +36,22 @@ See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the full design.
 ```text
 backend/                 Spring Boot API
   src/main/java/.../
-    agent/               @Tool methods (leave balance, holidays)
+    application/         Feature use-cases (auth, chat, leave, holidays; policies/actions stubs)
+    agent/               @Tool methods
     config/              App config, AI, seed data
     domain/              JPA entities + repositories
     mockhr/              Fake HR services
     security/            JWT, filters, SecurityConfig
-    service/             Chat, audit, conversation ownership
-    web/                 Controllers + DTOs
-frontend/                Next.js (JS)
-  app/                   Routes (App Router): /login, /chat
-  src/
-    api/httpClient.js    Low-level fetch only
-    actions/             Feature actions (auth, chat) — pages call these
-    components/          UI components
-docs/policies/           Sample HR policy markdown
+    web/                 Thin controllers + DTOs
+frontend/                Next.js (JS) — modular folders
+  app/                   Thin routes: /login, /chat
+  src/component/         Screens by module (auth, chat, layout, common)
+  src/configuration/     AppSetting (API base URL)
+  store/                 Feature *Actions (auth, chat, policies, actions stubs)
+  utils/api.js           HTTP client
+  utils/apiRoutes/       routesMapping + Route() — all backend paths
+docs/policies/           Sample HR policy markdown (seed)
+docs/*-ARCHITECTURE-GUIDE.md  Folder-structure references
 docs/LEARNING_LOG.md     Per-phase notes
 docker-compose.yml       PostgreSQL + pgvector
 docs/DEPLOY.md           Azure free Postgres + Container Apps + Vercel + CI/CD
@@ -57,12 +59,13 @@ docs/DEPLOY.md           Azure free Postgres + Container Apps + Vercel + CI/CD
 PROJECT_PLAN.md          Full design + phases
 ```
 
+
 ## Prerequisites
 
 - Java 21+, Maven
 - Node.js 20+
 - Docker Desktop running
-- `GEMINI_API_KEY` set in your user environment
+- Gemini API key in `backend/.env` (see below)
 
 ## Quick start
 
@@ -76,10 +79,26 @@ docker compose up -d
 
 ```bash
 cd backend
+copy .env.example .env
+# edit .env and set GEMINI_API_KEY=your-real-key
 mvn spring-boot:run
 ```
 
+`application.yml` reads `${GEMINI_API_KEY}` from the environment; `spring-dotenv` loads `backend/.env` automatically. Never commit `.env`.
+
 Health: http://localhost:8080/actuator/health
+
+#### Local chat with Ollama (when Gemini quota is hit)
+
+```bash
+# Install/start Ollama, then:
+ollama pull llama3.2
+cd backend
+set SPRING_PROFILES_ACTIVE=ollama
+mvn spring-boot:run
+```
+
+Azure live URL still uses Gemini — it cannot call Ollama on your laptop.
 
 ### 3. Frontend
 
@@ -109,9 +128,10 @@ UI: http://localhost:3000
 
 - [x] Phase 1: Monorepo, JWT login + RBAC, Next.js login/chat, Gemini chat
 - [x] Phase 2: Mock HR, `getLeaveBalance` / `getHolidayList`, tool audit, JDBC chat memory
-- [ ] Phase 3: RAG + citations
+- [x] Phase 2.5: Folder structure alignment (backend `application/`, frontend `apiRoutes` / `store` / `component`)
+- [ ] Phase 3: Uploadable policy library + RAG + citations (not leave/travel-only)
 - [ ] Phase 4: Write tools + confirmation
-- [ ] Phase 5: Tests + portfolio polish
+- [ ] Phase 5: Tests + portfolio polish (rate limit, cache, timeouts, …)
 
 ## Deploy (Azure free tier + Vercel)
 

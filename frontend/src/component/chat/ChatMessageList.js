@@ -4,8 +4,8 @@ export default function ChatMessageList({ messages, sending = false }) {
   if (!messages.length && !sending) {
     return (
       <div className="chat-empty">
-        Ask about leave policy, travel rules, or say hello. Phase 1 is chat-only;
-        tools come in Phase 2.
+        Ask about leave balance, holidays, or say hello. Policy Q&amp;A arrives in
+        Phase 3.
       </div>
     );
   }

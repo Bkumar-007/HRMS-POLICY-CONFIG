@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { logoutAction } from "../../actions/authActions";
+import { logoutAction } from "@store/auth/authActions";
 
 export default function AppHeader({ displayName, role }) {
   const router = useRouter();

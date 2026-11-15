@@ -1,4 +1,4 @@
-package com.acme.hrassistant.service;
+package com.acme.hrassistant.application.auth;
 
 import com.acme.hrassistant.security.EmployeePrincipal;
 import com.acme.hrassistant.security.JwtService;

@@ -1,6 +1,7 @@
 package com.acme.hrassistant.web;
 
-import com.acme.hrassistant.service.AuthService;
+import com.acme.hrassistant.application.auth.AuthService;
+import com.acme.hrassistant.web.dto.ApiResponse;
 import com.acme.hrassistant.web.dto.LoginRequest;
 import com.acme.hrassistant.web.dto.LoginResponse;
 import jakarta.validation.Valid;
@@ -20,7 +21,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ApiResponse.ok(authService.login(request));
     }
 }

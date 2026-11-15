@@ -1,4 +1,4 @@
-package com.acme.hrassistant.service;
+package com.acme.hrassistant.application.chat;
 
 import com.acme.hrassistant.agent.HrToolContextKeys;
 import com.acme.hrassistant.security.EmployeePrincipal;
@@ -11,7 +11,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.stereotype.Service;
 
 /**
- * Phase 2: Gemini chat with read-only HR tools, JDBC conversation memory, and tool audit log.
+ * Gemini chat with read-only HR tools, JDBC conversation memory, and tool audit log.
  */
 @Service
 public class ChatService {

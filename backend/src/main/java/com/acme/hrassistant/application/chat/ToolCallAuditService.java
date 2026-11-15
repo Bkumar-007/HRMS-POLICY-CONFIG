@@ -1,4 +1,4 @@
-package com.acme.hrassistant.service;
+package com.acme.hrassistant.application.chat;
 
 import com.acme.hrassistant.domain.ToolCallLog;
 import com.acme.hrassistant.domain.ToolCallLogRepository;

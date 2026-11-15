@@ -1,4 +1,4 @@
-package com.acme.hrassistant.service;
+package com.acme.hrassistant.application.chat;
 
 import com.acme.hrassistant.domain.ChatConversation;
 import com.acme.hrassistant.domain.ChatConversationRepository;
