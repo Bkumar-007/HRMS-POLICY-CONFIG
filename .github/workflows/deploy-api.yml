@@ -11,29 +11,30 @@ name: Deploy API
 #     ACR_LOGIN_SERVER           — e.g. myregistry.azurecr.io
 #     ACR_USERNAME
 #     ACR_PASSWORD
-#     SPRING_DATASOURCE_URL      — Azure Flexible Server JDBC for this env
-#                                  (hr_dev / hr_uat / hr_prod on one free B1ms server)
+#     SPRING_DATASOURCE_URL      — JDBC for this env (ACI Postgres or Flexible Server)
 #     SPRING_DATASOURCE_USERNAME
 #     SPRING_DATASOURCE_PASSWORD
 #     JWT_SECRET
 #     GEMINI_API_KEY
-#     APP_CORS_ALLOWED_ORIGINS   — matching Vercel origin(s), comma-separated
+#     APP_CORS_ALLOWED_ORIGINS   — frontend origin(s), comma-separated
 #   Variables:
 #     AZURE_RESOURCE_GROUP
 #     CONTAINER_APP_NAME         — e.g. hr-api-dev
 #     CONTAINER_APP_ENVIRONMENT  — Container Apps Environment name
 #     IMAGE_NAME                 — optional; defaults to hr-assistant-api
 #
-# Free-tier note: prefer ghcr.io for images; one Flexible Server B1ms;
-# start with a single Container App (dev). See docs/DEPLOY.md.
+# Setup helper: scripts/setup-github-azure-secrets.ps1
+# See docs/DEPLOY.md.
 
+# Manual only while Azure is shut down / secrets not configured.
+# Re-enable the "push:" block below when you recreate Azure + add AZURE_CREDENTIALS.
 on:
-  push:
-    branches: [develop, uat, main]
-    paths:
-      - "backend/**"
-      - ".github/workflows/deploy-api.yml"
   workflow_dispatch:
+  # push:
+  #   branches: [develop, uat, main]
+  #   paths:
+  #     - "backend/**"
+  #     - ".github/workflows/deploy-api.yml"
 
 concurrency:
   group: deploy-api-${{ github.ref }}
@@ -132,6 +133,7 @@ jobs:
           targetPort: 8080
           environmentVariables: |
             SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILE }}
+            GEMINI_CHAT_MODEL=gemini-3.5-flash-lite
             SPRING_DATASOURCE_URL=secretref:spring-datasource-url
             SPRING_DATASOURCE_USERNAME=secretref:spring-datasource-username
             SPRING_DATASOURCE_PASSWORD=secretref:spring-datasource-password

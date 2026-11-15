@@ -197,13 +197,60 @@ If you use ACR instead of GHCR, create it only while free credit lasts:
 az acr create -g rg-hr-assistant -n YOURACR --sku Basic
 ```
 
-### 4.3 GitHub Environments
+### 4.3 GitHub Environments (fixes “Azure login” CI failure)
 
-Create Environments: `dev`, `uat`, `prod`.
+`main` → GitHub Environment **`prod`**. `develop` → **`dev`**.
 
-**Secrets (per environment):** `AZURE_CREDENTIALS`, registry login (`ACR_*` or GHCR token), `SPRING_DATASOURCE_URL` (pointing at `hr_dev` / `hr_uat` / `hr_prod`), `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET`, `GEMINI_API_KEY`, `APP_CORS_ALLOWED_ORIGINS`.
+#### A) Create Azure service principal (once)
 
-**Variables:** `AZURE_RESOURCE_GROUP`, `CONTAINER_APP_NAME`, `CONTAINER_APP_ENVIRONMENT`, optional `IMAGE_NAME`.
+```powershell
+az ad sp create-for-rbac `
+  --name "hr-assistant-github" `
+  --role contributor `
+  --scopes /subscriptions/<SUB_ID>/resourceGroups/rg-hr-assistant-aca `
+  --sdk-auth
+```
+
+Save the JSON (that is `AZURE_CREDENTIALS`). Do not commit it.
+
+#### B) GitHub UI
+
+1. Repo → **Settings** → **Environments** → **New environment** → `prod` (also create `dev`).
+2. Under each environment, **Environment secrets** → add:
+
+| Secret | Example / source |
+|--------|------------------|
+| `AZURE_CREDENTIALS` | Full JSON from step A |
+| `ACR_LOGIN_SERVER` | `hracrbk733.azurecr.io` |
+| `ACR_USERNAME` | `az acr credential show -n hracrbk733 --query username -o tsv` |
+| `ACR_PASSWORD` | `az acr credential show -n hracrbk733 --query passwords[0].value -o tsv` |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://hrpgbk733dev.eastus.azurecontainer.io:5432/hr_dev` |
+| `SPRING_DATASOURCE_USERNAME` | `hr_user` |
+| `SPRING_DATASOURCE_PASSWORD` | ACI Postgres password |
+| `JWT_SECRET` | long random string |
+| `GEMINI_API_KEY` | Google AI Studio key |
+| `APP_CORS_ALLOWED_ORIGINS` | `https://hr-web-dev.ambitiousmushroom-e363850a.eastus.azurecontainerapps.io,http://localhost:3000` |
+
+3. **Environment variables**:
+
+| Variable | Value |
+|----------|--------|
+| `AZURE_RESOURCE_GROUP` | `rg-hr-assistant-aca` |
+| `CONTAINER_APP_NAME` | `hr-api-dev` |
+| `CONTAINER_APP_ENVIRONMENT` | `hr-cae` |
+| `IMAGE_NAME` | `hr-assistant-api` |
+
+4. Actions → failed **Deploy API** → **Re-run failed jobs**.
+
+#### C) Script helper (optional)
+
+After `gh auth login`:
+
+```powershell
+$env:GEMINI_API_KEY="..."
+$env:POSTGRES_PASSWORD="..."
+.\scripts\setup-github-azure-secrets.ps1
+```
 
 ---
 
