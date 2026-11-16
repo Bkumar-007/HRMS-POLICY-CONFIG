@@ -19,8 +19,8 @@ const MODE_RESET = "reset";
 export default function LoginScreen() {
   const router = useRouter();
   const [mode, setMode] = useState(MODE_LOGIN);
-  const [username, setUsername] = useState("priya.employee");
-  const [password, setPassword] = useState("password");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
