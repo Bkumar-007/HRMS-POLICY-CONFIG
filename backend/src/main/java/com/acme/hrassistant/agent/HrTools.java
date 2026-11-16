@@ -3,6 +3,8 @@ package com.acme.hrassistant.agent;
 import com.acme.hrassistant.application.actions.PendingActionCollector;
 import com.acme.hrassistant.application.actions.PendingActionService;
 import com.acme.hrassistant.application.actions.ToolIterationGuard;
+import com.acme.hrassistant.application.chat.PolicyQuizService;
+import com.acme.hrassistant.application.chat.QuizCollector;
 import com.acme.hrassistant.application.chat.ToolCallAuditService;
 import com.acme.hrassistant.application.holidays.HolidayFacade;
 import com.acme.hrassistant.application.leave.LeaveBalanceFacade;
@@ -14,6 +16,7 @@ import com.acme.hrassistant.domain.LeaveType;
 import com.acme.hrassistant.domain.PendingAction;
 import com.acme.hrassistant.rag.CitationCollector;
 import com.acme.hrassistant.rag.PolicySearchService;
+import com.acme.hrassistant.web.dto.ChatResponse.QuizQuestionDto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -34,6 +37,7 @@ public class HrTools {
     private final LeaveBalanceFacade leaveBalanceFacade;
     private final HolidayFacade holidayFacade;
     private final PolicySearchService policySearchService;
+    private final PolicyQuizService policyQuizService;
     private final PendingActionService pendingActionService;
     private final LeaveRules leaveRules;
     private final ToolCallAuditService toolCallAuditService;
@@ -42,12 +46,14 @@ public class HrTools {
             LeaveBalanceFacade leaveBalanceFacade,
             HolidayFacade holidayFacade,
             PolicySearchService policySearchService,
+            PolicyQuizService policyQuizService,
             PendingActionService pendingActionService,
             LeaveRules leaveRules,
             ToolCallAuditService toolCallAuditService) {
         this.leaveBalanceFacade = leaveBalanceFacade;
         this.holidayFacade = holidayFacade;
         this.policySearchService = policySearchService;
+        this.policyQuizService = policyQuizService;
         this.pendingActionService = pendingActionService;
         this.leaveRules = leaveRules;
         this.toolCallAuditService = toolCallAuditService;
@@ -119,8 +125,10 @@ public class HrTools {
     @Tool(description = """
             Search the HR policy library (uploaded and seeded documents) for answers about leave policy,
             travel, WFH, expenses, code of conduct, or any other indexed policy.
-            ALWAYS call this for policy / handbook / "can I..." policy questions.
+            ALWAYS call this for policy / handbook / "can I..." / "show me the clause" questions.
             Only answer from the returned context; if context is insufficient, say so.
+            When no passages are found, a helpdesk escalation PENDING action is staged automatically —
+            do not call raiseHelpdeskTicket again for the same miss.
             """)
     public String searchHrPolicies(
             @ToolParam(description = "Natural-language search query about HR policy") String query,
@@ -144,10 +152,32 @@ public class HrTools {
 
         String output;
         if (result.documents().isEmpty()) {
-            output = "No relevant policy passages found for: " + query;
+            PendingAction pending = pendingActionService.createHelpdeskPending(
+                    employeeId,
+                    conversationId,
+                    "Policy question unresolved: " + truncate(query, 80),
+                    """
+                            Automatic escalation: no indexed policy passage matched the employee question.
+                            Question: %s
+                            Please review and reply or attach the correct policy.
+                            """.formatted(query));
+            Object pendingObj = toolContext.getContext().get(HrToolContextKeys.PENDING_ACTION_COLLECTOR);
+            if (pendingObj instanceof PendingActionCollector collector) {
+                collector.add(pending);
+            }
+            output = """
+                    No relevant policy passages found for: %s
+
+                    A helpdesk escalation PENDING action was staged automatically.
+                    actionId=%s
+                    summary=%s
+                    Tell the employee no indexed clause was found, ask them to Confirm or Cancel the ticket,
+                    and do NOT call raiseHelpdeskTicket again for this miss.
+                    """.formatted(query, pending.getId(), pending.getSummary());
         } else {
             output = """
                     Use ONLY the following policy context. Cite policy names/sections when answering.
+                    For "show me the clause" requests, quote the relevant wording and mention the citation chips.
                     If the context does not contain the answer, say you could not find it in the indexed policies.
 
                     %s
@@ -156,6 +186,45 @@ public class HrTools {
 
         toolCallAuditService.record(employeeId, conversationId, "searchHrPolicies", input, output);
         return output;
+    }
+
+    @Tool(description = """
+            Build a short training quiz (up to 3 questions) from indexed HR policy passages about a topic.
+            Use when the user asks to be tested, wants a quiz, follow-up questions, or training check
+            after reading a policy. Quiz cards appear in the UI — tell the user to answer there.
+            """)
+    public String startPolicyQuiz(
+            @ToolParam(description = "Policy topic to quiz on, e.g. WFH Fridays, travel hotels, sick leave certificate")
+                    String topic,
+            ToolContext toolContext) {
+        enter(toolContext, "startPolicyQuiz");
+        Long employeeId = requireEmployeeId(toolContext);
+        String conversationId = requireConversationId(toolContext);
+        String grade = stringOrEmpty(toolContext.getContext().get(HrToolContextKeys.EMPLOYEE_GRADE));
+        String location = stringOrEmpty(toolContext.getContext().get(HrToolContextKeys.EMPLOYEE_LOCATION));
+
+        Map<String, Object> input = new LinkedHashMap<>();
+        input.put("topic", topic);
+
+        List<QuizQuestionDto> questions = policyQuizService.generate(topic, grade, location);
+        Object quizObj = toolContext.getContext().get(HrToolContextKeys.QUIZ_COLLECTOR);
+        if (quizObj instanceof QuizCollector collector) {
+            collector.addAll(questions);
+        }
+
+        String result;
+        if (questions.isEmpty()) {
+            result = "Could not build a quiz — no indexed policy passages matched topic: " + topic;
+        } else {
+            result = """
+                    Quiz ready with %d question(s) about "%s".
+                    Questions are shown as interactive cards in the UI.
+                    Briefly encourage the employee to attempt the quiz; do not reveal correct answers unless they ask after answering.
+                    """.formatted(questions.size(), topic);
+        }
+
+        toolCallAuditService.record(employeeId, conversationId, "startPolicyQuiz", input, result);
+        return result;
     }
 
     @Tool(description = """
@@ -223,6 +292,7 @@ public class HrTools {
     @Tool(description = """
             Start a helpdesk ticket for the logged-in employee. Creates a PENDING action only;
             ticket is opened after the employee confirms in the UI.
+            Skip this if searchHrPolicies already staged an escalation for a missing policy answer.
             """)
     public String raiseHelpdeskTicket(
             @ToolParam(description = "Short ticket subject") String subject,
@@ -278,13 +348,21 @@ public class HrTools {
 
     private static String requireConversationId(ToolContext toolContext) {
         Object value = toolContext.getContext().get(HrToolContextKeys.CONVERSATION_ID);
-        if (value == null || String.valueOf(value).isBlank()) {
-            throw new IllegalStateException("conversationId missing from tool context");
+        if (value instanceof String id && !id.isBlank()) {
+            return id;
         }
-        return String.valueOf(value);
+        throw new IllegalStateException("conversationId missing from tool context");
     }
 
     private static String stringOrEmpty(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    private static String truncate(String value, int max) {
+        if (value == null) {
+            return "";
+        }
+        String compact = value.replaceAll("\\s+", " ").trim();
+        return compact.length() <= max ? compact : compact.substring(0, max - 1) + "…";
     }
 }

@@ -23,6 +23,7 @@ class AgentEvalCatalogTest {
             "getLeaveBalance",
             "getHolidayList",
             "searchHrPolicies",
+            "startPolicyQuiz",
             "applyLeave",
             "raiseHelpdeskTicket");
 
@@ -31,7 +32,7 @@ class AgentEvalCatalogTest {
         Path catalog = resolveCatalog();
         JsonNode root = new ObjectMapper().readTree(Files.readString(catalog));
         JsonNode scenarios = root.get("scenarios");
-        assertTrue(scenarios.isArray() && scenarios.size() >= 20, "Need 20+ agent eval scenarios");
+        assertTrue(scenarios.isArray() && scenarios.size() >= 35, "Need 35+ agent eval scenarios");
 
         int scored = 0;
         int hits = 0;
@@ -90,11 +91,16 @@ class AgentEvalCatalogTest {
     static Set<String> predictTools(String prompt) {
         String p = prompt.toLowerCase(Locale.ROOT);
         java.util.LinkedHashSet<String> tools = new java.util.LinkedHashSet<>();
+        if (p.contains("quiz") || p.contains("test me") || p.contains("training check")) {
+            tools.add("startPolicyQuiz");
+        }
         if (p.contains("balance")
-                || p.contains("how many") && p.contains("leave")
+                || (p.contains("how many") && p.contains("leave"))
                 || p.contains("leaves do i")
                 || p.contains("leaves remain")
-                || p.contains("leaves left")) {
+                || p.contains("leaves left")
+                || p.contains("कितने")
+                || (p.contains("leaves") && p.contains("बचे"))) {
             tools.add("getLeaveBalance");
         }
         if (p.contains("holiday") || p.contains("republic day")) {
@@ -107,9 +113,17 @@ class AgentEvalCatalogTest {
                 || p.contains("expense")
                 || p.contains("conduct")
                 || p.contains("maternity")
+                || p.contains("paternity")
                 || p.contains("probation")
                 || p.contains("hybrid")
                 || p.contains("internet")
+                || p.contains("dress code")
+                || p.contains("transport allowance")
+                || p.contains("grade g4")
+                || p.contains("gift")
+                || p.contains("clause")
+                || p.contains("dikhao")
+                || p.contains("teleportation")
                 || p.contains("helpdesk sla")
                 || p.contains("sla for")
                 || p.contains("ignore previous")
@@ -119,7 +133,7 @@ class AgentEvalCatalogTest {
         if ((p.contains("apply") && p.contains("leave")) || p.contains("book me a flight")) {
             tools.add("applyLeave");
         }
-        if (p.contains("ticket") || p.contains("helpdesk") && !p.contains("sla")) {
+        if (p.contains("ticket") || (p.contains("helpdesk") && !p.contains("sla"))) {
             tools.add("raiseHelpdeskTicket");
         }
         return tools;

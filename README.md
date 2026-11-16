@@ -1,6 +1,6 @@
 # Recoil HR — Policy Assistant + Action Agent
 
-Portfolio project: an employee HR portal with **RAG over HR policies** and an **action agent** that calls tools, enforces RBAC, and asks the user to confirm writes.
+Portfolio project: a **focused HR policy assistant** (not a full HRMS) with **RAG over policies** and an **action agent** that calls tools, enforces RBAC, and asks the user to confirm writes.
 
 > Confidentiality: uses **mock HR APIs**, fictional company data (Acme Corp), and authored sample policies — no real employer code or data.
 
@@ -23,7 +23,7 @@ Recoil HR portal  →  Spring Boot API  →  RAG (pgvector) + Agent tools → Mo
                          │
                          ├── JWT / RBAC (EMPLOYEE, MANAGER, HR_ADMIN)
                          ├── Pending actions (confirm / cancel)
-                         ├── Leave approvals, people, breaches, helpdesk inbox
+                         ├── Pending leave / helpdesk confirmations (from chat)
                          ├── Password-reset OTP (email or SMS)
                          ├── Rate limit + Caffeine cache
                          └── Tool call audit log
@@ -38,18 +38,20 @@ Identity (`employeeId`, grade, location) comes from the JWT tool context. The mo
 
 See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the full design.
 
-## Portal
+## Product surface (slim)
+
+**Core:** Assistant + Policies + Profile.  
+**Manager extras:** Leave approvals + Helpdesk escalations from chat.  
+**Not the product focus:** People / Breaches (kept in code for demos, hidden from main nav).
 
 | Screen | Path | Who | What |
 |--------|------|-----|------|
-| Assistant | `/chat` | Everyone | Policy Q&A with citations; leave and helpdesk actions that need Confirm |
-| Leave | `/leave` | Everyone | Own requests; managers and HR approve, reject, or cancel |
-| Policies | `/policies` | Everyone browses; HR uploads | Library of indexed policies (md, txt, html, rtf, pdf, doc, docx, odt) |
-| People | `/people` | Manager, HR | Directory and team; HR assigns roles and managers |
-| Breaches | `/breaches` | Manager, HR | Log and update policy-violation status |
-| Helpdesk | `/helpdesk` | Manager, HR | Inbox of tickets opened after chat confirmation |
+| Assistant | `/chat` | Everyone | Policy Q&A, citations, quizzes, confirm leave/helpdesk |
+| Policies | `/policies` | Everyone browses; HR uploads | Indexed policy library |
+| Leave | `/leave` | Manager, HR | Approvals queue (employees apply from chat) |
+| Helpdesk | `/helpdesk` | Manager, HR | Tickets opened after chat confirmation |
 | Profile | `/profile` | Everyone | Own contact details |
-| Login | `/login` | Public | Sign in, or reset password with email/SMS OTP |
+| Login | `/login` | Public | Sign in / OTP reset |
 
 Agent tools (`HrTools`):
 
@@ -57,9 +59,10 @@ Agent tools (`HrTools`):
 |------|--------|
 | `getLeaveBalance` | Read the signed-in employee's balances |
 | `getHolidayList` | Company holidays, optional month, location-aware |
-| `searchHrPolicies` | Vector search with grade/location filters; citations |
+| `searchHrPolicies` | Vector search + citations; empty → auto escalate |
+| `startPolicyQuiz` | Short training quiz from policy passages |
 | `applyLeave` | Validate rules, then stage a pending action |
-| `raiseHelpdeskTicket` | Stage a ticket; it opens only after Confirm |
+| `raiseHelpdeskTicket` | Stage a ticket; opens only after Confirm |
 
 ## Repository layout
 

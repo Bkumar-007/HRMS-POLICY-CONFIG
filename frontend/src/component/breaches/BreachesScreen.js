@@ -9,8 +9,11 @@ import {
 import { listPeopleAction } from "@store/people/peopleActions";
 import AppShell from "@component/layout/AppShell";
 import Button from "@component/common/Button";
+import HtmlEditor from "@component/common/HtmlEditor";
+import HtmlViewer from "@component/common/HtmlViewer";
 import StatusBadge from "@component/common/StatusBadge";
 import useRoleGuard from "@component/common/useRoleGuard";
+import { plainTextFromHtml } from "@utils/richText";
 
 export default function BreachesScreen() {
   const session = useRoleGuard("/breaches");
@@ -55,6 +58,11 @@ export default function BreachesScreen() {
   async function handleCreate(event) {
     event.preventDefault();
     if (!session?.token || !canManage) {
+      return;
+    }
+    const notesText = plainTextFromHtml(notes);
+    if (!notesText) {
+      setError("Notes are required");
       return;
     }
     setSubmitting(true);
@@ -148,15 +156,16 @@ export default function BreachesScreen() {
               />
             </label>
           </div>
-          <label className="field">
+          <div className="field">
             <span className="field-label">Notes</span>
-            <input
+            <HtmlEditor
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="What happened?"
-              required
+              onChange={setNotes}
+              placeholder="What happened? Use bold, links, lists, images…"
+              ariaLabel="Breach notes"
+              minHeight={120}
             />
-          </label>
+          </div>
           <Button type="submit" icon="alert" loading={submitting}>
             Record breach
           </Button>
@@ -192,9 +201,10 @@ export default function BreachesScreen() {
                   <tr key={breach.id}>
                     <td>
                       <strong>{breach.employeeName}</strong>
-                      <p className="muted" style={{ margin: "4px 0 0", fontSize: "0.8rem" }}>
-                        {breach.notes}
-                      </p>
+                      <HtmlViewer
+                        value={breach.notes}
+                        className="muted breach-notes-rich"
+                      />
                     </td>
                     <td>{breach.policyName}</td>
                     <td>
@@ -236,7 +246,7 @@ export default function BreachesScreen() {
                   <span>{breach.policyName}</span>
                   <span>Severity: {breach.severity}</span>
                   <span>By {breach.reportedByName}</span>
-                  <span>{breach.notes}</span>
+                  <HtmlViewer value={breach.notes} className="breach-notes-rich" />
                 </div>
                 {canManage ? (
                   <select

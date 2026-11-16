@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSessionAction } from "@store/auth/authActions";
 import {
   deletePolicyAction,
   disablePolicyAction,
   enablePolicyAction,
+  getPolicyAction,
   ingestAllPoliciesAction,
   ingestPolicyAction,
   listPoliciesAction,
@@ -16,15 +17,21 @@ import AppShell from "@component/layout/AppShell";
 import Button from "@component/common/Button";
 import PolicyUploadForm from "@component/policies/PolicyUploadForm";
 import PolicyList from "@component/policies/PolicyList";
+import PolicyViewerModal from "@component/policies/PolicyViewerModal";
 
 export default function PoliciesScreen() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [session, setSession] = useState(null);
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [viewer, setViewer] = useState(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
+  const [viewerError, setViewerError] = useState("");
+  const [viewerSection, setViewerSection] = useState("");
 
   const load = useCallback(async (token) => {
     setLoading(true);
@@ -48,6 +55,39 @@ export default function PoliciesScreen() {
     setSession(current);
     load(current.token);
   }, [router, load]);
+
+  useEffect(() => {
+    const policyId = searchParams.get("policyId");
+    const section = searchParams.get("section") || "";
+    if (!policyId || !session?.token) {
+      return;
+    }
+    let cancelled = false;
+    async function openFromQuery() {
+      setViewerLoading(true);
+      setViewerError("");
+      setViewerSection(section);
+      try {
+        const detail = await getPolicyAction(session.token, policyId);
+        if (!cancelled) {
+          setViewer(detail);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setViewerError(err.message || "Could not open policy");
+          setViewer({});
+        }
+      } finally {
+        if (!cancelled) {
+          setViewerLoading(false);
+        }
+      }
+    }
+    openFromQuery();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, session]);
 
   const isAdmin = session?.role === "HR_ADMIN";
 
@@ -97,6 +137,13 @@ export default function PoliciesScreen() {
     }
   }
 
+  function closeViewer() {
+    setViewer(null);
+    setViewerError("");
+    setViewerSection("");
+    router.replace("/policies");
+  }
+
   if (!session) {
     return <div className="page">Loading...</div>;
   }
@@ -134,6 +181,7 @@ export default function PoliciesScreen() {
             <p className="muted" style={{ margin: 0 }}>
               You are signed in as an employee — browse only. Log in as{" "}
               <strong>admin.hr</strong> to upload, disable, re-ingest, or delete policies.
+              Open a citation from chat to jump into the clause view.
             </p>
           </div>
         )}
@@ -161,6 +209,13 @@ export default function PoliciesScreen() {
           />
         )}
       </section>
+      <PolicyViewerModal
+        policy={viewer}
+        section={viewerSection}
+        loading={viewerLoading}
+        error={viewerError}
+        onClose={closeViewer}
+      />
     </AppShell>
   );
 }

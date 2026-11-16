@@ -83,11 +83,16 @@ public class AgentEvalRunner implements ApplicationRunner {
     static Set<String> predictTools(String prompt) {
         String p = prompt.toLowerCase(Locale.ROOT);
         Set<String> tools = new LinkedHashSet<>();
+        if (p.contains("quiz") || p.contains("test me") || p.contains("training check")) {
+            tools.add("startPolicyQuiz");
+        }
         if (p.contains("balance")
                 || (p.contains("how many") && p.contains("leave"))
                 || p.contains("leaves do i")
                 || p.contains("leaves remain")
-                || p.contains("leaves left")) {
+                || p.contains("leaves left")
+                || p.contains("कितने")
+                || (p.contains("leaves") && p.contains("बचे"))) {
             tools.add("getLeaveBalance");
         }
         if (p.contains("holiday") || p.contains("republic day")) {
@@ -100,9 +105,17 @@ public class AgentEvalRunner implements ApplicationRunner {
                 || p.contains("expense")
                 || p.contains("conduct")
                 || p.contains("maternity")
+                || p.contains("paternity")
                 || p.contains("probation")
                 || p.contains("hybrid")
                 || p.contains("internet")
+                || p.contains("dress code")
+                || p.contains("transport allowance")
+                || p.contains("grade g4")
+                || p.contains("gift")
+                || p.contains("clause")
+                || p.contains("dikhao")
+                || p.contains("teleportation")
                 || p.contains("helpdesk sla")
                 || p.contains("sla for")
                 || p.contains("ignore previous")

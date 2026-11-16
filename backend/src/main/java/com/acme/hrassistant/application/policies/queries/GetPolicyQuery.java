@@ -18,7 +18,7 @@ public class GetPolicyQuery {
     @Transactional(readOnly = true)
     public PolicyDocumentDto execute(UUID id) {
         return policyDocumentRepository.findById(id)
-                .map(PolicyDocumentDto::from)
+                .map(PolicyDocumentDto::fromWithContent)
                 .orElseThrow(() -> new IllegalStateException("Policy not found: " + id));
     }
 }

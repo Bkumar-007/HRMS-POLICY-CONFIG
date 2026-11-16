@@ -17,6 +17,7 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const [actionBusyId, setActionBusyId] = useState("");
   const [error, setError] = useState("");
+  const [preferredLanguage, setPreferredLanguage] = useState("AUTO");
 
   useEffect(() => {
     const current = getSessionAction();
@@ -42,7 +43,12 @@ export default function ChatScreen() {
     setError("");
 
     try {
-      const response = await sendChatAction(session.token, text, conversationId);
+      const response = await sendChatAction(
+        session.token,
+        text,
+        conversationId,
+        preferredLanguage,
+      );
       if (response.conversationId) {
         setConversationId(response.conversationId);
       }
@@ -54,6 +60,7 @@ export default function ChatScreen() {
           text: response.message || "",
           citations: response.citations || [],
           pendingActions: response.pendingActions || [],
+          quiz: response.quiz || [],
           actionResults: {},
         },
       ]);
@@ -125,6 +132,15 @@ export default function ChatScreen() {
     }
   }
 
+  function handleOpenPolicy(policyId, section) {
+    const params = new URLSearchParams();
+    params.set("policyId", policyId);
+    if (section) {
+      params.set("section", section);
+    }
+    router.push(`/policies?${params.toString()}`);
+  }
+
   if (!session) {
     return <div className="page">Loading...</div>;
   }
@@ -133,8 +149,8 @@ export default function ChatScreen() {
     <AppShell
       displayName={session.displayName}
       role={session.role}
-      title="HR Assistant"
-      subtitle="Ask about leave, holidays, policies, or raise a helpdesk request."
+      title="Policy Assistant"
+      subtitle="Ask policy questions, get citations, confirm leave or helpdesk actions in chat."
     >
       <section className="chat-panel">
         <ChatMessageList
@@ -143,10 +159,16 @@ export default function ChatScreen() {
           actionBusyId={actionBusyId}
           onConfirmAction={handleConfirmAction}
           onCancelAction={handleCancelAction}
+          onOpenPolicy={handleOpenPolicy}
         />
         {error ? <p className="error">{error}</p> : null}
       </section>
-      <ChatInput onSend={handleSend} disabled={sending || !!actionBusyId} />
+      <ChatInput
+        onSend={handleSend}
+        disabled={sending || !!actionBusyId}
+        preferredLanguage={preferredLanguage}
+        onLanguageChange={setPreferredLanguage}
+      />
     </AppShell>
   );
 }

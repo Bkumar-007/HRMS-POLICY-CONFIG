@@ -32,6 +32,10 @@ const PATHS = {
     "M12 3l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z",
   calendar:
     "M7 4V2m10 2V2M4 8h16M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm3 7h.01M12 12h.01M15 12h.01M8 16h.01M12 16h.01M16 16h.01",
+  panelLeft:
+    "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm5 0v14",
+  chevronLeft: "M15 6l-6 6 6 6",
+  chevronRight: "M9 6l6 6-6 6",
 };
 
 export default function Icon({ name, size = 18, className = "", strokeWidth = 1.75 }) {

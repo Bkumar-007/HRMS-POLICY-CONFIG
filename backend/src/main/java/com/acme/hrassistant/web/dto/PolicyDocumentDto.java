@@ -17,9 +17,19 @@ public record PolicyDocumentDto(
         String location,
         Long uploadedBy,
         Instant createdAt,
-        String lastError
+        String lastError,
+        /** Present on get-by-id so the UI can open a clause / section. */
+        String content
 ) {
     public static PolicyDocumentDto from(PolicyDocument doc) {
+        return from(doc, false);
+    }
+
+    public static PolicyDocumentDto fromWithContent(PolicyDocument doc) {
+        return from(doc, true);
+    }
+
+    private static PolicyDocumentDto from(PolicyDocument doc, boolean includeContent) {
         return new PolicyDocumentDto(
                 doc.getId(),
                 doc.getName(),
@@ -31,6 +41,7 @@ public record PolicyDocumentDto(
                 doc.getLocation(),
                 doc.getUploadedBy(),
                 doc.getCreatedAt(),
-                doc.getLastError());
+                doc.getLastError(),
+                includeContent ? doc.getContent() : null);
     }
 }

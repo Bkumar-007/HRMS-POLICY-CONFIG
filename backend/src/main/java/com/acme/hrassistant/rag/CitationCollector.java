@@ -21,12 +21,22 @@ public class CitationCollector {
             if (item == null) {
                 continue;
             }
-            String key = item.source() + "|" + item.section() + "|" + item.snippet();
+            String key = nullToEmpty(item.policyId())
+                    + "|"
+                    + nullToEmpty(item.source())
+                    + "|"
+                    + nullToEmpty(item.section())
+                    + "|"
+                    + nullToEmpty(item.snippet());
             citations.putIfAbsent(key, item);
         }
     }
 
     public List<CitationDto> getCitations() {
         return new ArrayList<>(citations.values());
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

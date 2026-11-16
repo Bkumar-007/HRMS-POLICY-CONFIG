@@ -44,16 +44,19 @@ public class PolicySearchService {
 
         for (Document doc : filtered) {
             Map<String, Object> meta = doc.getMetadata();
+            String policyId = str(meta.get(PolicyMetadataKeys.POLICY_ID));
             String source = str(meta.get(PolicyMetadataKeys.POLICY_NAME));
             String section = str(meta.get(PolicyMetadataKeys.SECTION));
             String snippet = snippet(doc.getText());
-            String key = source + "|" + section;
+            String key = policyId + "|" + source + "|" + section;
             dedupe.putIfAbsent(key, new CitationDto(
+                    policyId.isBlank() ? null : policyId,
                     source.isBlank() ? "Unknown policy" : source,
                     section.isBlank() ? "General" : section,
                     snippet));
 
             context.append("---\n")
+                    .append("PolicyId: ").append(policyId).append('\n')
                     .append("Policy: ").append(source).append('\n')
                     .append("Section: ").append(section).append('\n')
                     .append(doc.getText()).append("\n\n");

@@ -1,9 +1,9 @@
 /**
- * Role-based navigation and route access.
+ * Focused Policy Assistant — not a full HRMS.
  *
- * EMPLOYEE  — self-service (chat, leave, policies browse, profile)
- * MANAGER   — team ops (people, leave approvals, breaches, helpdesk)
- * HR_ADMIN  — full portal including policy admin + role assignment
+ * Core: chat (RAG + tools), policy library, profile.
+ * Light ops only for managers: leave approvals + helpdesk escalations from chat.
+ * People / breaches screens stay in the codebase but are out of the product nav.
  */
 
 export const ROLES = {
@@ -12,60 +12,56 @@ export const ROLES = {
   HR_ADMIN: "HR_ADMIN",
 };
 
-/** null roles = every authenticated user */
+/** Primary product navigation (slim). */
 export const NAV_ITEMS = [
   {
     href: "/chat",
     label: "Assistant",
     icon: "chat",
-    description: "Ask HR questions",
-    roles: [ROLES.EMPLOYEE, ROLES.MANAGER, ROLES.HR_ADMIN],
-  },
-  {
-    href: "/leave",
-    label: "Leave",
-    icon: "calendar",
-    description: "Requests & approvals",
+    description: "Policy Q&A + actions",
     roles: [ROLES.EMPLOYEE, ROLES.MANAGER, ROLES.HR_ADMIN],
   },
   {
     href: "/policies",
     label: "Policies",
     icon: "policies",
-    description: "Policy library",
+    description: "Indexed library",
     roles: [ROLES.EMPLOYEE, ROLES.MANAGER, ROLES.HR_ADMIN],
   },
   {
-    href: "/people",
-    label: "People",
-    icon: "users",
-    description: "Directory & roles",
-    roles: [ROLES.MANAGER, ROLES.HR_ADMIN],
-  },
-  {
-    href: "/breaches",
-    label: "Breaches",
-    icon: "alert",
-    description: "Policy violations",
+    href: "/leave",
+    label: "Leave",
+    icon: "calendar",
+    description: "Approvals queue",
     roles: [ROLES.MANAGER, ROLES.HR_ADMIN],
   },
   {
     href: "/helpdesk",
     label: "Helpdesk",
     icon: "ticket",
-    description: "Ticket inbox",
+    description: "Chat escalations",
     roles: [ROLES.MANAGER, ROLES.HR_ADMIN],
   },
   {
     href: "/profile",
-    label: "My profile",
+    label: "Profile",
     icon: "user",
-    description: "Contact details",
+    description: "Your account",
     roles: [ROLES.EMPLOYEE, ROLES.MANAGER, ROLES.HR_ADMIN],
   },
 ];
 
+/** Routes that still exist but are not marketed as a full HR suite. */
+export const SECONDARY_ROUTES = ["/people", "/breaches", "/leave"];
+
 export function canAccessPath(role, href) {
+  if (href === "/people" || href === "/breaches") {
+    return role === ROLES.MANAGER || role === ROLES.HR_ADMIN;
+  }
+  if (href === "/leave") {
+    // Employees apply leave from chat; managers/admins use the approvals screen.
+    return role === ROLES.MANAGER || role === ROLES.HR_ADMIN || role === ROLES.EMPLOYEE;
+  }
   const item = NAV_ITEMS.find((nav) => nav.href === href);
   if (!item) {
     return true;

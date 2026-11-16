@@ -153,7 +153,7 @@ export default function LoginScreen() {
             <h1>Your workplace, one place</h1>
             <p style={{ margin: 0, color: "rgba(244,248,252,0.82)" }}>
               Ask policy questions, check leave, and manage the HR knowledge library with the same
-              security model as a production employee portal.
+              security model of a production policy assistant.
             </p>
           </div>
           <ul className="login-hero-points">
