@@ -95,6 +95,11 @@ app:
     top-k: ${APP_RAG_TOP_K:5}
     similarity-threshold: ${APP_RAG_SIMILARITY_THRESHOLD:0.45}
     seed-on-empty: ${APP_RAG_SEED_ON_EMPTY:true}
+    # Optional: Postgres full-text + pgvector merged with reciprocal rank fusion. Measure with eval-retrieval.
+    hybrid:
+      enabled: ${APP_RAG_HYBRID_ENABLED:false}
+      rrf-k: ${APP_RAG_HYBRID_RRF_K:60}
+      candidates: ${APP_RAG_HYBRID_CANDIDATES:20}
   agent:
     max-tool-iterations: ${APP_AGENT_MAX_TOOL_ITERATIONS:8}
   actions:

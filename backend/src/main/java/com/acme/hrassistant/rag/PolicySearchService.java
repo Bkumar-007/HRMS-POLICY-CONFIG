@@ -16,27 +16,51 @@ import org.springframework.stereotype.Service;
 public class PolicySearchService {
 
     private final VectorStore vectorStore;
+    private final PolicyKeywordSearch keywordSearch;
     private final int topK;
     private final double similarityThreshold;
+    private final boolean hybridEnabled;
+    private final int rrfK;
+    private final int keywordCandidates;
 
-    public PolicySearchService(VectorStore vectorStore, AppProperties appProperties) {
+    public PolicySearchService(
+            VectorStore vectorStore, PolicyKeywordSearch keywordSearch, AppProperties appProperties) {
         this.vectorStore = vectorStore;
+        this.keywordSearch = keywordSearch;
         this.topK = appProperties.getRag().getTopK();
         this.similarityThreshold = appProperties.getRag().getSimilarityThreshold();
+        this.hybridEnabled = appProperties.getRag().getHybrid().isEnabled();
+        this.rrfK = appProperties.getRag().getHybrid().getRrfK();
+        this.keywordCandidates = appProperties.getRag().getHybrid().getCandidates();
     }
 
+    /** Uses hybrid retrieval when {@code app.rag.hybrid.enabled=true}, vector-only otherwise. */
     public SearchResult search(String query, String employeeGrade, String employeeLocation) {
+        return search(query, employeeGrade, employeeLocation, hybridEnabled);
+    }
+
+    /**
+     * Hybrid mode merges pgvector similarity hits with Postgres full-text hits via reciprocal rank
+     * fusion. Full-text hits are only added when the vector search found something above the
+     * similarity threshold, so questions that are genuinely outside the policy library still return
+     * nothing (and trigger the helpdesk escalation) instead of matching on a stray common word.
+     */
+    public SearchResult search(String query, String employeeGrade, String employeeLocation, boolean hybrid) {
         List<Document> raw = vectorStore.similaritySearch(SearchRequest.builder()
                 .query(query)
                 .topK(Math.max(topK * 3, topK))
                 .similarityThreshold(similarityThreshold)
                 .build());
 
-        List<Document> filtered = raw.stream()
-                .filter(doc -> matchesAttribute(doc, PolicyMetadataKeys.GRADE, employeeGrade))
-                .filter(doc -> matchesAttribute(doc, PolicyMetadataKeys.LOCATION, employeeLocation))
-                .limit(topK)
-                .toList();
+        List<Document> vectorHits = filterByAttributes(raw, employeeGrade, employeeLocation);
+        List<Document> filtered;
+        if (hybrid && !vectorHits.isEmpty()) {
+            List<Document> keywordHits = filterByAttributes(
+                    keywordSearch.search(query, keywordCandidates), employeeGrade, employeeLocation);
+            filtered = ReciprocalRankFusion.fuse(List.of(vectorHits, keywordHits), rrfK, topK);
+        } else {
+            filtered = vectorHits.stream().limit(topK).toList();
+        }
 
         List<CitationDto> citations = new ArrayList<>();
         Map<String, CitationDto> dedupe = new LinkedHashMap<>();
@@ -64,6 +88,13 @@ public class PolicySearchService {
         citations.addAll(dedupe.values());
 
         return new SearchResult(filtered, citations, context.toString().trim());
+    }
+
+    private static List<Document> filterByAttributes(List<Document> docs, String employeeGrade, String employeeLocation) {
+        return docs.stream()
+                .filter(doc -> matchesAttribute(doc, PolicyMetadataKeys.GRADE, employeeGrade))
+                .filter(doc -> matchesAttribute(doc, PolicyMetadataKeys.LOCATION, employeeLocation))
+                .toList();
     }
 
     private static boolean matchesAttribute(Document doc, String key, String employeeValue) {

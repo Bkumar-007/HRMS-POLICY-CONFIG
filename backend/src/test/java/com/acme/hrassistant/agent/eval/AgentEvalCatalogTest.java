@@ -1,141 +1,93 @@
 package com.acme.hrassistant.agent.eval;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.acme.hrassistant.agent.eval.AgentEvalCatalog.Scenario;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * Loads {@code eval/agent-eval.json} and runs a deterministic heuristic scorer
- * (keyword → expected tools) so CI can report a baseline without calling Gemini.
+ * Structural validation of {@code eval/agent-eval.json}. This test deliberately does NOT score
+ * the agent: tool-selection quality is measured live via {@link AgentEvalRunner} (profile
+ * {@code eval-live}) through ChatService and the tool-call audit log.
  */
 class AgentEvalCatalogTest {
 
-    private static final Set<String> KNOWN_TOOLS = Set.of(
-            "getLeaveBalance",
-            "getHolidayList",
-            "searchHrPolicies",
-            "startPolicyQuiz",
-            "applyLeave",
-            "raiseHelpdeskTicket");
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
-    void catalogHasAtLeastTwentyScenariosAndHeuristicPassRateIsHigh() throws Exception {
-        Path catalog = resolveCatalog();
-        JsonNode root = new ObjectMapper().readTree(Files.readString(catalog));
-        JsonNode scenarios = root.get("scenarios");
-        assertTrue(scenarios.isArray() && scenarios.size() >= 35, "Need 35+ agent eval scenarios");
+    void catalogHasEnoughScenariosWithUniqueIdsAndNonEmptyPrompts() throws Exception {
+        List<Scenario> scenarios = AgentEvalCatalog.load(MAPPER);
+        assertTrue(scenarios.size() >= 35, "Need 35+ agent eval scenarios, found " + scenarios.size());
 
-        int scored = 0;
-        int hits = 0;
-        List<String> misses = new ArrayList<>();
+        Set<String> ids = new HashSet<>();
+        for (Scenario scenario : scenarios) {
+            assertFalse(scenario.id().isBlank(), "Scenario with blank id");
+            assertTrue(ids.add(scenario.id()), "Duplicate scenario id " + scenario.id());
+            assertFalse(scenario.prompt().isBlank(), "Empty prompt in " + scenario.id());
+        }
+    }
 
-        for (JsonNode scenario : scenarios) {
+    @Test
+    void everyScenarioDeclaresExpectedAndForbiddenToolsFromKnownSet() throws Exception {
+        JsonNode root = MAPPER.readTree(Files.readString(AgentEvalCatalog.path(), StandardCharsets.UTF_8));
+        for (JsonNode scenario : root.get("scenarios")) {
             String id = scenario.path("id").asText();
-            String prompt = scenario.path("prompt").asText();
-            List<String> expected = toList(scenario.get("expectedTools"));
-            if (expected.isEmpty()) {
-                continue; // adversarial / free-form — not heuristically scored
-            }
-            scored++;
-            Set<String> predicted = predictTools(prompt);
-            boolean ok = predicted.containsAll(expected);
-            if (ok) {
-                hits++;
-            } else {
-                misses.add(id + " expected=" + expected + " predicted=" + predicted);
-            }
-            for (String tool : expected) {
-                assertTrue(KNOWN_TOOLS.contains(tool), "Unknown expected tool in " + id + ": " + tool);
-            }
+            assertTrue(scenario.path("expectedTools").isArray(), "expectedTools array missing in " + id);
+            assertTrue(scenario.path("forbiddenTools").isArray(), "forbiddenTools array missing in " + id);
         }
 
-        double rate = scored == 0 ? 0 : (double) hits / scored;
-        assertTrue(
-                rate >= 0.85,
-                "Heuristic tool hit-rate too low: " + hits + "/" + scored + " misses=" + misses);
-        assertFalse(misses.size() > scored, "unexpected");
+        for (Scenario scenario : AgentEvalCatalog.load(MAPPER)) {
+            for (String tool : scenario.expectedTools()) {
+                assertTrue(AgentEvalCatalog.KNOWN_TOOLS.contains(tool),
+                        "Unknown expected tool in " + scenario.id() + ": " + tool);
+            }
+            for (String tool : scenario.forbiddenTools()) {
+                assertTrue(AgentEvalCatalog.KNOWN_TOOLS.contains(tool),
+                        "Unknown forbidden tool in " + scenario.id() + ": " + tool);
+            }
+            assertFalse(
+                    scenario.expectedTools().stream().anyMatch(scenario.forbiddenTools()::contains),
+                    "Tool is both expected and forbidden in " + scenario.id());
+        }
     }
 
-    private static Path resolveCatalog() {
-        Path[] candidates = {
-            Path.of("eval", "agent-eval.json"),
-            Path.of("..", "eval", "agent-eval.json"),
-            Path.of(System.getProperty("user.dir"), "eval", "agent-eval.json"),
-            Path.of(System.getProperty("user.dir"), "..", "eval", "agent-eval.json")
-        };
-        for (Path candidate : candidates) {
-            if (Files.isRegularFile(candidate)) {
-                return candidate.toAbsolutePath().normalize();
-            }
+    @Test
+    void catalogCoversEveryAgentTool() throws Exception {
+        Set<String> covered = new HashSet<>();
+        for (Scenario scenario : AgentEvalCatalog.load(MAPPER)) {
+            covered.addAll(scenario.expectedTools());
         }
-        throw new IllegalStateException("eval/agent-eval.json not found from " + System.getProperty("user.dir"));
+        assertTrue(covered.containsAll(AgentEvalCatalog.KNOWN_TOOLS),
+                "Catalog never expects: " + difference(AgentEvalCatalog.KNOWN_TOOLS, covered));
     }
 
-    private static List<String> toList(JsonNode node) {
-        List<String> out = new ArrayList<>();
-        if (node != null && node.isArray()) {
-            node.forEach(n -> out.add(n.asText()));
+    @Test
+    void keywordHeuristicScoringWasRemoved() {
+        // The old predictTools() keyword matcher was scored against the same prompts it was written
+        // from, so its hit-rate said nothing about the agent. Guard against reintroducing it.
+        for (Class<?> type : List.of(AgentEvalRunner.class, AgentEvalCatalogTest.class, AgentEvalScorer.class)) {
+            boolean hasPredictTools = Arrays.stream(type.getDeclaredMethods())
+                    .map(Method::getName)
+                    .anyMatch("predictTools"::equals);
+            assertFalse(hasPredictTools, type.getSimpleName() + " must not define predictTools");
         }
-        return out;
+        assertThrows(NoSuchMethodException.class, () -> AgentEvalRunner.class.getDeclaredMethod("predictTools", String.class));
     }
 
-    static Set<String> predictTools(String prompt) {
-        String p = prompt.toLowerCase(Locale.ROOT);
-        java.util.LinkedHashSet<String> tools = new java.util.LinkedHashSet<>();
-        if (p.contains("quiz") || p.contains("test me") || p.contains("training check")) {
-            tools.add("startPolicyQuiz");
-        }
-        if (p.contains("balance")
-                || (p.contains("how many") && p.contains("leave"))
-                || p.contains("leaves do i")
-                || p.contains("leaves remain")
-                || p.contains("leaves left")
-                || p.contains("कितने")
-                || (p.contains("leaves") && p.contains("बचे"))) {
-            tools.add("getLeaveBalance");
-        }
-        if (p.contains("holiday") || p.contains("republic day")) {
-            tools.add("getHolidayList");
-        }
-        if (p.contains("policy")
-                || p.contains("wfh")
-                || p.contains("work from home")
-                || p.contains("travel")
-                || p.contains("expense")
-                || p.contains("conduct")
-                || p.contains("maternity")
-                || p.contains("paternity")
-                || p.contains("probation")
-                || p.contains("hybrid")
-                || p.contains("internet")
-                || p.contains("dress code")
-                || p.contains("transport allowance")
-                || p.contains("grade g4")
-                || p.contains("gift")
-                || p.contains("clause")
-                || p.contains("dikhao")
-                || p.contains("teleportation")
-                || p.contains("helpdesk sla")
-                || p.contains("sla for")
-                || p.contains("ignore previous")
-                || p.contains("salaries")) {
-            tools.add("searchHrPolicies");
-        }
-        if ((p.contains("apply") && p.contains("leave")) || p.contains("book me a flight")) {
-            tools.add("applyLeave");
-        }
-        if (p.contains("ticket") || (p.contains("helpdesk") && !p.contains("sla"))) {
-            tools.add("raiseHelpdeskTicket");
-        }
-        return tools;
+    private static Set<String> difference(Set<String> all, Set<String> covered) {
+        Set<String> missing = new HashSet<>(all);
+        missing.removeAll(covered);
+        return missing;
     }
 }

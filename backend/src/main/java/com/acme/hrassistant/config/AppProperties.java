@@ -160,6 +160,11 @@ public class AppProperties {
         private int topK = 5;
         private double similarityThreshold = 0.45;
         private boolean seedOnEmpty = true;
+        private final Hybrid hybrid = new Hybrid();
+
+        public Hybrid getHybrid() {
+            return hybrid;
+        }
 
         public int getTopK() {
             return topK;
@@ -183,6 +188,39 @@ public class AppProperties {
 
         public void setSeedOnEmpty(boolean seedOnEmpty) {
             this.seedOnEmpty = seedOnEmpty;
+        }
+    }
+
+    /** Optional Postgres full-text + pgvector retrieval merged with reciprocal rank fusion. */
+    public static class Hybrid {
+        private boolean enabled = false;
+        /** RRF constant k in 1 / (k + rank); 60 is the value from the original RRF paper. */
+        private int rrfK = 60;
+        /** How many full-text candidates to fetch before fusion. */
+        private int candidates = 20;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public int getRrfK() {
+            return rrfK;
+        }
+
+        public void setRrfK(int rrfK) {
+            this.rrfK = rrfK;
+        }
+
+        public int getCandidates() {
+            return candidates;
+        }
+
+        public void setCandidates(int candidates) {
+            this.candidates = candidates;
         }
     }
 

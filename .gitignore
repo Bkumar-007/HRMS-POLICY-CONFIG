@@ -29,3 +29,6 @@ Thumbs.db
 
 # Maven wrapper jar is committed; local overrides not
 .mvn/wrapper/maven-wrapper.jar.part
+
+# Local scratch notes (not for the public repo)
+docs/scratchpad.md
